@@ -2,75 +2,15 @@
   "name": "tubol-merger-pro",
   "version": "1.0.0",
   "description": "TUBOL Merger Pro - local PDF packet workspace",
-  "main": "main.js",
+  "main": "server.js",
   "author": "TUBOL Merger Pro",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win --publish never",
-    "dist:mac": "electron-builder --mac --publish never",
-    "dist:all": "electron-builder --win --mac"
-  },
-  "devDependencies": {
-    "electron": "^38.1.0",
-    "electron-builder": "^26.0.12"
+    "start": "node server.js"
   },
   "dependencies": {
     "html2pdf.js": "^0.10.3",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.54"
-  },
-"build": {
-  "appId": "com.tubol.merger.pro",
-  "productName": "TUBOL Merger Pro",
-  "files": [
-    "index.html",
-    "design.css",
-    "functions.js",
-    "main.js",
-    "preload.js",
-    "vendor/**/*",
-    "assets/**/*",
-    "package.json"
-  ],
-  "asar": true,
-  "directories": {
-    "output": "dist",
-    "buildResources": "assets"
-  },
-  "win": {
-    "target": [
-      {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      },
-      {
-        "target": "portable",
-        "arch": [
-          "x64"
-        ]
-      }
-     ],
-      "artifactName": "PDF-Workspace-${version}-Windows-${arch}.${ext}",
-      "icon": "assets/POOP.PNG"
-    },
-    "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "category": "public.app-category.productivity",
-      "artifactName": "PDF-Workspace-${version}-macOS-${arch}.${ext}",
-      "icon": "assets/POOP.PNG"
-    },
-    "linux": {
-      "icon": "assets/POOP.PNG",
-      "target": [
-        "AppImage"
-      ]
   }
-}
 }
