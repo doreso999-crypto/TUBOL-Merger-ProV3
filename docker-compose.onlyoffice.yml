@@ -1,0 +1,9 @@
+services:
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver
+    container_name: tubol-onlyoffice
+    ports:
+      - "8090:80"
+    environment:
+      JWT_ENABLED: "false"
+    restart: unless-stopped
