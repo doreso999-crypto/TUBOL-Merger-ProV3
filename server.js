@@ -47,7 +47,7 @@ function sendFile(filePath, res) {
       const html = data.toString('utf8');
       const injected = html.replace(
         /<script src=["']functions\.js["']><\/script>/i,
-        '<script src="functions.js"></script>\n  <script src="drop-scope.js"></script>'
+        '<script src="functions.js"></script>\n  <script src="drop-scope.js"></script>\n  <script src="rotate-fix.js"></script>'
       );
       output = Buffer.from(injected, 'utf8');
     }
