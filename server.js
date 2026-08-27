@@ -43,8 +43,6 @@ function sendFile(filePath, res) {
     const ext = path.extname(filePath).toLowerCase();
     let output = data;
 
-    // Load the scoped drag-and-drop override after functions.js so it replaces
-    // the original document-wide PDF drop handler before DOMContentLoaded fires.
     if (ext === '.html' && path.basename(filePath).toLowerCase() === 'index.html') {
       const html = data.toString('utf8');
       const injected = html.replace(
