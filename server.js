@@ -30,6 +30,38 @@ function safePath(requestPath) {
   return full;
 }
 
+function sendFile(filePath, res) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      res.writeHead(err.code === 'ENOENT' ? 404 : 500, {
+        'Content-Type': 'text/plain; charset=utf-8',
+      });
+      res.end(err.code === 'ENOENT' ? 'Not found' : 'Server error');
+      return;
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    let output = data;
+
+    // Load the scoped drag-and-drop override after functions.js so it replaces
+    // the original document-wide PDF drop handler before DOMContentLoaded fires.
+    if (ext === '.html' && path.basename(filePath).toLowerCase() === 'index.html') {
+      const html = data.toString('utf8');
+      const injected = html.replace(
+        /<script src=["']functions\.js["']><\/script>/i,
+        '<script src="functions.js"></script>\n  <script src="drop-scope.js"></script>'
+      );
+      output = Buffer.from(injected, 'utf8');
+    }
+
+    res.writeHead(200, {
+      'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+      'Cache-Control': 'no-cache',
+    });
+    res.end(output);
+  });
+}
+
 const server = http.createServer((req, res) => {
   try {
     const url = new URL(req.url || '/', `http://${req.headers.host || `${HOST}:${PORT}`}`);
@@ -43,34 +75,9 @@ const server = http.createServer((req, res) => {
 
     fs.stat(filePath, (statErr, stats) => {
       if (!statErr && stats.isDirectory()) {
-        const indexPath = path.join(filePath, 'index.html');
-        return fs.readFile(indexPath, (err, data) => {
-          if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-            res.end('Not found');
-            return;
-          }
-          res.writeHead(200, { 'Content-Type': MIME_TYPES['.html'] });
-          res.end(data);
-        });
+        return sendFile(path.join(filePath, 'index.html'), res);
       }
-
-      fs.readFile(filePath, (err, data) => {
-        if (err) {
-          res.writeHead(err.code === 'ENOENT' ? 404 : 500, {
-            'Content-Type': 'text/plain; charset=utf-8',
-          });
-          res.end(err.code === 'ENOENT' ? 'Not found' : 'Server error');
-          return;
-        }
-
-        const ext = path.extname(filePath).toLowerCase();
-        res.writeHead(200, {
-          'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-          'Cache-Control': 'no-cache',
-        });
-        res.end(data);
-      });
+      sendFile(filePath, res);
     });
   } catch (error) {
     res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
