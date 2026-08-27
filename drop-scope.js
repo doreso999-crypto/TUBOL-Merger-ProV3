@@ -1,68 +1,43 @@
-/* Restrict global PDF drag-and-drop to the Merge & Organize view. */
-window.setupGlobalPdfDrop = function setupGlobalPdfDrop() {
-  const overlay = document.querySelector('#globalDropOverlay');
-  if (!overlay) return;
+/* Restrict PDF drag-and-drop to Merge & Organize only. */
+(function () {
+  const mergeActive = () => document.querySelector('#mergeView')?.classList.contains('active-view') === true;
+  const fileDrag = e => !!e.dataTransfer && (Array.from(e.dataTransfer.types || []).includes('Files') || e.dataTransfer.files?.length > 0);
+  const overlay = () => document.querySelector('#globalDropOverlay');
+  const hide = () => { const el = overlay(); el?.classList.remove('show'); el?.setAttribute('aria-hidden','true'); };
+  const show = () => { const el = overlay(); el?.classList.add('show'); el?.setAttribute('aria-hidden','false'); };
+  let depth = 0;
 
-  let dragDepth = 0;
-  const hasFiles = (event) => Array.from(event.dataTransfer?.types || []).includes('Files');
-  const isMergeViewActive = () => document.querySelector('#mergeView')?.classList.contains('active-view') === true;
+  document.addEventListener('dragenter', e => {
+    if (!fileDrag(e)) return;
+    e.preventDefault();
+    if (!mergeActive()) return hide();
+    depth += 1; show();
+  }, true);
 
-  const show = () => {
-    overlay.classList.add('show');
-    overlay.setAttribute('aria-hidden', 'false');
-  };
+  document.addEventListener('dragover', e => {
+    if (!fileDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!mergeActive()) return hide();
+    e.dataTransfer.dropEffect = 'copy'; show();
+  }, true);
 
-  const hide = () => {
-    dragDepth = 0;
-    overlay.classList.remove('show');
-    overlay.setAttribute('aria-hidden', 'true');
-  };
+  document.addEventListener('dragleave', e => {
+    if (!fileDrag(e)) return;
+    e.preventDefault();
+    if (!mergeActive()) return hide();
+    depth = Math.max(0, depth - 1);
+    if (!depth) hide();
+  }, true);
 
-  document.addEventListener('dragenter', (event) => {
-    if (!hasFiles(event)) return;
-    if (!isMergeViewActive()) {
-      hide();
-      return;
-    }
-    dragDepth += 1;
-    show();
-  });
-
-  document.addEventListener('dragover', (event) => {
-    if (!hasFiles(event)) return;
-
-    // Prevent the browser from navigating to the dropped PDF anywhere in the app.
-    event.preventDefault();
-
-    if (!isMergeViewActive()) {
-      hide();
-      return;
-    }
-
-    event.dataTransfer.dropEffect = 'copy';
-    show();
-  });
-
-  document.addEventListener('dragleave', (event) => {
-    if (!hasFiles(event)) return;
-    if (!isMergeViewActive()) {
-      hide();
-      return;
-    }
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (!dragDepth) hide();
-  });
-
-  document.addEventListener('drop', async (event) => {
-    if (!hasFiles(event)) return;
-
-    // PDFs dropped outside Merge & Organize are ignored.
-    event.preventDefault();
+  document.addEventListener('drop', async e => {
+    if (!fileDrag(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
     hide();
-
-    if (!isMergeViewActive()) return;
-    await addPdfFiles(event.dataTransfer.files);
-  });
+    if (!mergeActive()) return;
+    if (typeof window.addPdfFiles === 'function') await window.addPdfFiles(e.dataTransfer.files);
+  }, true);
 
   window.addEventListener('blur', hide);
-};
+})();
