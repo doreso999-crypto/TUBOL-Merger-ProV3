@@ -71,7 +71,7 @@
   min-width: 66px;
 }
 
-/* Flat document workspace: the page itself is the visual focus. */
+/* Flat document workspace: the document itself is the visual focus. */
 #letterView .authorization-editor-flat {
   margin: 0;
   width: 100%;
@@ -90,7 +90,25 @@
   display: none !important;
 }
 
-/* The old wrapper remains in the DOM for compatibility, but adds no visual frame. */
+/* Keep only the action menu in the page header; remove the descriptive title/eyebrow. */
+#letterView .view-header > :first-child {
+  display: none !important;
+}
+
+#letterView .view-header {
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* Black document boundary for easy canvas targeting. */
+#letterView .authorization-page-wrap-flat .letter-page,
+#letterView .letter-page {
+  border: 1px solid #000 !important;
+  box-sizing: border-box;
+  box-shadow: none;
+  border-radius: 0;
+}
+
 #letterView .authorization-page-wrap-flat {
   display: block;
   width: 100%;
@@ -105,8 +123,6 @@
 
 #letterView .authorization-page-wrap-flat .letter-page {
   margin: 0 auto;
-  box-shadow: none;
-  border-radius: 0;
 }
 
 #letterView .authorization-action-menu {
