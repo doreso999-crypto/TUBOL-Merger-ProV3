@@ -137,40 +137,41 @@ I authorize this dispute.
       .replaceAll('{{BUREAU_ADDRESS}}', bureauAddressHtml);
   }
 
-  function prepareAuthorizationEditor(html) {
-    const editor = document.getElementById('letterEditor');
-    if (!editor) throw new Error('Authorization document surface is unavailable.');
-
-    const paper = document.getElementById('paperSizeSelect');
-    const margin = document.getElementById('marginSelect');
-    if (paper) paper.value = 'legal';
-    if (margin) margin.value = 'normal';
+  function ensureHiddenAuthorizationEditor() {
+    let editor = document.getElementById('letterEditor');
+    if (!editor) {
+      editor = document.createElement('div');
+      editor.id = 'letterEditor';
+      editor.setAttribute('aria-hidden', 'true');
+      editor.setAttribute('contenteditable', 'true');
+      document.body.appendChild(editor);
+    }
 
     Object.assign(editor.style, {
+      position: 'fixed',
+      left: '-100000px',
+      top: '0',
       width: '816px',
       minWidth: '816px',
       maxWidth: '816px',
-      minHeight: '1344px',
-      height: '1344px',
-      maxHeight: '1344px',
+      minHeight: '1056px',
+      height: '1056px',
       padding: '96px',
       boxSizing: 'border-box',
       overflow: 'hidden',
       background: '#fff',
-      position: 'fixed',
-      left: '-100000px',
-      top: '0',
       pointerEvents: 'none',
-      opacity: '0'
+      opacity: '0',
+      visibility: 'hidden',
     });
 
-    editor.innerHTML = html;
     return editor;
   }
 
   async function addAuthorizationToPacket() {
     const html = buildAuthorizationHtml();
-    prepareAuthorizationEditor(html);
+    const editor = ensureHiddenAuthorizationEditor();
+    editor.innerHTML = html;
 
     if (typeof window.insertLetterIntoPacket !== 'function') {
       throw new Error('Authorization packet insertion is unavailable.');
@@ -194,6 +195,7 @@ I authorize this dispute.
       try {
         await addAuthorizationToPacket();
         closeLetterTemplateModal();
+        if (typeof window.toast === 'function') window.toast('Authorization added to packet', 'success');
       } catch (error) {
         console.error('M&O Authorization insertion failed.', error);
         if (typeof window.toast === 'function') {
@@ -203,7 +205,7 @@ I authorize this dispute.
     });
   }
 
-  function removeLetterEditorSurface() {
+  function removeVisibleLetterEditorSurface() {
     document.querySelector('[data-view="letterView"]')?.remove();
     document.getElementById('letterView')?.remove();
     document.getElementById('saveTemplateModal')?.remove();
@@ -214,7 +216,8 @@ I authorize this dispute.
     const mergeActions = mergeView?.querySelector('.header-actions');
     if (!mergeActions) return;
 
-    removeLetterEditorSurface();
+    removeVisibleLetterEditorSurface();
+    ensureHiddenAuthorizationEditor();
 
     let button = document.getElementById('openAuthorizationFromMergeBtn');
     if (!button) {
@@ -261,7 +264,6 @@ I authorize this dispute.
     document.getElementById('letterTemplateCloseBtn')?.addEventListener('click', reset);
   }
 
-  // Override the shared authorization/template hooks so this module owns the M&O workflow.
   window.AUTH_BUREAUS = AUTH_BUREAUS;
   window.DEFAULT_AUTH_TEMPLATE = DEFAULT_AUTH_TEMPLATE;
   window.getAuthTemplates = getTemplates;
@@ -273,14 +275,11 @@ I authorize this dispute.
   window.openLetterTemplateModal = openLetterTemplateModal;
   window.closeLetterTemplateModal = closeLetterTemplateModal;
   window.applyTemplateToLetter = async () => {
-    prepareAuthorizationEditor(buildAuthorizationHtml());
+    ensureHiddenAuthorizationEditor().innerHTML = buildAuthorizationHtml();
     closeLetterTemplateModal();
   };
   window.updateTemplateDeleteState = updateTemplateDeleteState;
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupAuthorizationAction, { once: true });
-  } else {
-    setupAuthorizationAction();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupAuthorizationAction, { once: true });
+  else setupAuthorizationAction();
 })();
