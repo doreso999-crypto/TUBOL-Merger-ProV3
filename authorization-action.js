@@ -4,11 +4,18 @@
 
   const TEMPLATE_APPLY_ID = 'letterTemplateApplyBtn';
   const AUTH_BUTTON_ID = 'openAuthorizationFromMergeBtn';
+  const BUREAUS = {
+    experian: { name: 'Experian', address: 'Experian\nP.O. Box 2002\nAllen, TX 75013' },
+    equifax: { name: 'Equifax Information Services LLC', address: 'Equifax Information Services LLC\nP.O. Box 740256\nAtlanta, GA 30374' },
+    transunion: { name: 'TransUnion Consumer Solutions', address: 'TransUnion Consumer Solutions\nP.O. Box 2000\nChester, PA 19016-2000' },
+  };
+
+  function esc(value) {
+    if (typeof window.escapeHtml === 'function') return window.escapeHtml(String(value ?? ''));
+    return String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+  }
 
   function buildAuthorizationMarkup(template, name, date, bureau) {
-    const esc = typeof window.escapeHtml === 'function'
-      ? window.escapeHtml
-      : (value) => String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
     const bureauAddressHtml = bureau.address.split('\n').map(esc).join('<br>');
     const html = template.html || `<div style="font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.35">${esc(template.content || '').replace(/\n/g, '<br>')}</div>`;
     return html
@@ -23,6 +30,8 @@
     document.querySelector('[data-view="letterView"]')?.remove();
     document.getElementById('letterView')?.remove();
     document.getElementById('saveTemplateModal')?.remove();
+    document.querySelectorAll('#editorSettingsBar, #editorToolbar, #letterEditor, #wordCount, #paperSizeSelect, #marginSelect, #fontFamilySelect, #fontSizeSelect, #lineSpacingSelect, #listStyleSelect')
+      .forEach((el) => el.remove());
   }
 
   function ensureHiddenEditor() {
@@ -30,20 +39,11 @@
     if (!editor) {
       editor = document.createElement('div');
       editor.id = 'letterEditor';
-      editor.contentEditable = 'true';
       Object.assign(editor.style, {
-        position: 'fixed',
-        left: '-100000px',
-        top: '0',
-        width: '816px',
-        minHeight: '1056px',
-        height: '1056px',
-        padding: '96px',
-        background: '#fff',
-        pointerEvents: 'none',
-        opacity: '0',
+        position: 'fixed', left: '-100000px', top: '0',
+        width: '816px', minHeight: '1056px', height: '1056px',
+        padding: '96px', background: '#fff', pointerEvents: 'none', opacity: '0'
       });
-      editor.setAttribute('aria-hidden', 'true');
       document.body.appendChild(editor);
     }
     return editor;
@@ -52,6 +52,7 @@
   function replaceApplyButton() {
     const original = document.getElementById(TEMPLATE_APPLY_ID);
     if (!original || original.dataset.moAuthorizationBound === 'true') return original;
+
     const button = original.cloneNode(true);
     button.dataset.moAuthorizationBound = 'true';
     original.replaceWith(button);
@@ -59,6 +60,7 @@
     button.addEventListener('click', async () => {
       if (!window.authorizationAddDirectlyToPacket) return;
       window.authorizationAddDirectlyToPacket = false;
+
       try {
         const select = document.getElementById('letterTemplateSelect');
         const templates = typeof window.getAuthTemplates === 'function' ? window.getAuthTemplates() : [];
@@ -66,11 +68,11 @@
         if (!template) throw new Error('No authorization template is available.');
 
         const name = (document.getElementById('letterTemplateClientName')?.value || '').trim() || 'Your Name';
-        const rawDate = document.getElementById('letterTemplateDate')?.value || (typeof window.getEasternToday === 'function' ? window.getEasternToday() : '');
+        const fallbackDate = new Date().toISOString().slice(0, 10);
+        const rawDate = document.getElementById('letterTemplateDate')?.value ||
+          (typeof window.getEasternToday === 'function' ? window.getEasternToday() : fallbackDate);
         const date = typeof window.formatAuthDate === 'function' ? window.formatAuthDate(rawDate) : rawDate;
-        const bureauKey = document.getElementById('letterTemplateBureau')?.value || 'equifax';
-        const bureau = window.AUTH_BUREAUS?.[bureauKey] || window.AUTH_BUREAUS?.equifax;
-        if (!bureau) throw new Error('Authorization bureau information is unavailable.');
+        const bureau = BUREAUS[document.getElementById('letterTemplateBureau')?.value || 'equifax'] || BUREAUS.equifax;
 
         ensureHiddenEditor().innerHTML = buildAuthorizationMarkup(template, name, date, bureau);
         if (typeof window.insertLetterIntoPacket !== 'function') throw new Error('Authorization packet insertion is unavailable.');
@@ -130,9 +132,6 @@
     document.getElementById('letterTemplateCloseBtn')?.addEventListener('click', reset);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupAuthorizationAction, { once: true });
-  } else {
-    setupAuthorizationAction();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupAuthorizationAction, { once: true });
+  else setupAuthorizationAction();
 })();
