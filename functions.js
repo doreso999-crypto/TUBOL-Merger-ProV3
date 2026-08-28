@@ -18,5 +18,4 @@ document.write(`
   <script src="authorization-ui.js"><\/script>
   <script src="thumbnail-size-ui.js"><\/script>
   <script src="workspace-ui-fixes.js"><\/script>
-  <script src="google-docs-shortcuts.js"><\/script>
 `);
