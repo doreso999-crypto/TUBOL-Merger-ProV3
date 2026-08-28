@@ -1,26 +1,16 @@
-/* Sidebar hidden without changing the responsive behavior of the M&O workspace. */
-.sidebar {
+/* Sidebar hidden; keep M&O as a single full-width column. */
+.sidebar,
+.sidebar * {
   display: none !important;
 }
 
-.workspace {
+main.workspace {
   grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-areas: none !important;
 }
 
-@media (max-width: 700px) {
-  .workspace {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .content {
-    width: 100%;
-    max-width: none;
-    padding-inline: 10px !important;
-  }
-}
-
-@media (max-width: 420px) {
-  .content {
-    padding-inline: 8px !important;
-  }
+main.workspace > .content {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  max-width: none !important;
 }
