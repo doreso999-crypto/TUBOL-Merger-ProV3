@@ -75,6 +75,7 @@
 #letterView .authorization-editor-flat {
   margin: 0;
   width: 100%;
+  padding: 0;
 }
 
 #letterView .authorization-editor-flat-card {
@@ -86,8 +87,26 @@
 }
 
 #letterView .authorization-editor-flat-card .editor-footer {
+  display: none !important;
+}
+
+/* The old wrapper remains in the DOM for compatibility, but adds no visual frame. */
+#letterView .authorization-page-wrap-flat {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   background: transparent;
-  border-top: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+#letterView .authorization-page-wrap-flat .letter-page {
+  margin: 0 auto;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 #letterView .authorization-action-menu {
@@ -148,6 +167,18 @@
   background: var(--hover, #f3f4f6);
 }
 
+#letterView .authorization-word-count {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border, #d7dee7);
+  color: var(--muted, #66727f);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 @media (max-width: 760px) {
   #letterView .authorization-doc-layout-popover {
     right: -6px;
@@ -157,5 +188,10 @@
   #letterView .authorization-action-panel {
     right: -6px;
     min-width: 210px;
+  }
+
+  #letterView .authorization-word-count {
+    margin-left: 0;
+    padding-left: 7px;
   }
 }
