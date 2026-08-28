@@ -1,0 +1,69 @@
+/* Theme-aware PDF Packet Preview.
+   The rendered PDF pages remain white for document fidelity; the preview chrome follows workspace theme variables. */
+.pdf-preview-modal {
+  background: rgba(15, 23, 42, .58) !important;
+}
+
+.pdf-preview-shell {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+}
+
+.pdf-preview-header,
+.pdf-preview-footer {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+}
+
+.pdf-preview-header {
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.pdf-preview-footer {
+  border-top: 1px solid var(--line) !important;
+  color: var(--muted) !important;
+}
+
+.preview-title,
+.preview-meta {
+  color: var(--text) !important;
+}
+
+.preview-meta {
+  color: var(--muted) !important;
+}
+
+.preview-tool {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.preview-tool:hover,
+.preview-tool:focus-visible {
+  background: var(--surface) !important;
+  color: var(--accent) !important;
+  border-color: var(--accent) !important;
+}
+
+.preview-tool.close:hover,
+.preview-tool.close:focus-visible {
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
+}
+
+.continuous-preview-scroll {
+  background: var(--bg) !important;
+}
+
+.continuous-preview-page {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+
+.continuous-preview-loading {
+  color: var(--muted) !important;
+}
