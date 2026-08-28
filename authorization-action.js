@@ -1,79 +1,133 @@
-/* M&O Authorization action.
-   This file owns only the + Authorization workflow in Merge & Organize.
-   It intentionally does not depend on the removed Authorization Letter editor UI.
-*/
+/* M&O Authorization action — isolated from the removed Letter Editor. */
 (() => {
   'use strict';
+
+  const TEMPLATE_APPLY_ID = 'letterTemplateApplyBtn';
+  const AUTH_BUTTON_ID = 'openAuthorizationFromMergeBtn';
+
+  function buildAuthorizationMarkup(template, name, date, bureau) {
+    const esc = typeof window.escapeHtml === 'function'
+      ? window.escapeHtml
+      : (value) => String(value ?? '').replace(/[&<>'"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+    const bureauAddressHtml = bureau.address.split('\n').map(esc).join('<br>');
+    const html = template.html || `<div style="font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.35">${esc(template.content || '').replace(/\n/g, '<br>')}</div>`;
+    return html
+      .replaceAll('{{CLIENT_NAME}}', esc(name))
+      .replaceAll('{{DATE}}', esc(date))
+      .replaceAll('{{BUREAU_NAME}}', esc(bureau.name))
+      .replaceAll('{{BUREAU_ADDRESS_HTML}}', bureauAddressHtml)
+      .replaceAll('{{BUREAU_ADDRESS}}', bureauAddressHtml);
+  }
+
+  function removeEditorSurface() {
+    document.querySelector('[data-view="letterView"]')?.remove();
+    document.getElementById('letterView')?.remove();
+    document.getElementById('saveTemplateModal')?.remove();
+  }
+
+  function ensureHiddenEditor() {
+    let editor = document.getElementById('letterEditor');
+    if (!editor) {
+      editor = document.createElement('div');
+      editor.id = 'letterEditor';
+      editor.contentEditable = 'true';
+      Object.assign(editor.style, {
+        position: 'fixed',
+        left: '-100000px',
+        top: '0',
+        width: '816px',
+        minHeight: '1056px',
+        height: '1056px',
+        padding: '96px',
+        background: '#fff',
+        pointerEvents: 'none',
+        opacity: '0',
+      });
+      editor.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(editor);
+    }
+    return editor;
+  }
+
+  function replaceApplyButton() {
+    const original = document.getElementById(TEMPLATE_APPLY_ID);
+    if (!original || original.dataset.moAuthorizationBound === 'true') return original;
+    const button = original.cloneNode(true);
+    button.dataset.moAuthorizationBound = 'true';
+    original.replaceWith(button);
+
+    button.addEventListener('click', async () => {
+      if (!window.authorizationAddDirectlyToPacket) return;
+      window.authorizationAddDirectlyToPacket = false;
+      try {
+        const select = document.getElementById('letterTemplateSelect');
+        const templates = typeof window.getAuthTemplates === 'function' ? window.getAuthTemplates() : [];
+        const template = templates.find((item) => item.id === select?.value) || templates[0];
+        if (!template) throw new Error('No authorization template is available.');
+
+        const name = (document.getElementById('letterTemplateClientName')?.value || '').trim() || 'Your Name';
+        const rawDate = document.getElementById('letterTemplateDate')?.value || (typeof window.getEasternToday === 'function' ? window.getEasternToday() : '');
+        const date = typeof window.formatAuthDate === 'function' ? window.formatAuthDate(rawDate) : rawDate;
+        const bureauKey = document.getElementById('letterTemplateBureau')?.value || 'equifax';
+        const bureau = window.AUTH_BUREAUS?.[bureauKey] || window.AUTH_BUREAUS?.equifax;
+        if (!bureau) throw new Error('Authorization bureau information is unavailable.');
+
+        ensureHiddenEditor().innerHTML = buildAuthorizationMarkup(template, name, date, bureau);
+        if (typeof window.insertLetterIntoPacket !== 'function') throw new Error('Authorization packet insertion is unavailable.');
+        await window.insertLetterIntoPacket();
+        if (typeof window.closeLetterTemplateModal === 'function') window.closeLetterTemplateModal();
+      } catch (error) {
+        console.error('M&O Authorization insertion failed', error);
+        if (typeof window.toast === 'function') window.toast(error?.message || 'Could not add authorization to packet', 'error');
+      } finally {
+        button.textContent = 'Add Authorization to Packet';
+      }
+    });
+    return button;
+  }
 
   function setupAuthorizationAction() {
     const mergeView = document.getElementById('mergeView');
     const mergeActions = mergeView?.querySelector('.header-actions');
-    const templateApply = document.getElementById('letterTemplateApplyBtn');
-
+    const templateApply = document.getElementById(TEMPLATE_APPLY_ID);
     if (!mergeActions || !templateApply) return;
 
-    let button = document.getElementById('openAuthorizationFromMergeBtn');
+    removeEditorSurface();
+    const apply = replaceApplyButton();
+
+    let button = document.getElementById(AUTH_BUTTON_ID);
     if (!button) {
       button = document.createElement('button');
       button.type = 'button';
       button.className = 'btn btn-secondary';
-      button.id = 'openAuthorizationFromMergeBtn';
+      button.id = AUTH_BUTTON_ID;
       button.title = 'Add Authorization to Packet';
       button.textContent = '＋ Authorization';
-
       const compress = document.getElementById('compressPacketBtn');
       mergeActions.insertBefore(button, compress || mergeActions.lastElementChild);
     }
 
-    if (button.dataset.authorizationActionBound === 'true') return;
-    button.dataset.authorizationActionBound = 'true';
-
-    button.addEventListener('click', () => {
-      window.authorizationAddDirectlyToPacket = true;
-      templateApply.textContent = 'Add Authorization to Packet';
-
-      if (typeof window.openLetterTemplateModal === 'function') {
-        window.openLetterTemplateModal();
-      } else {
-        console.error('Authorization template modal is unavailable.');
-        if (typeof window.toast === 'function') {
+    if (button.dataset.actionBound !== 'true') {
+      button.dataset.actionBound = 'true';
+      button.addEventListener('click', () => {
+        window.authorizationAddDirectlyToPacket = true;
+        const currentApply = document.getElementById(TEMPLATE_APPLY_ID) || apply;
+        if (currentApply) currentApply.textContent = 'Add Authorization to Packet';
+        if (typeof window.openLetterTemplateModal === 'function') {
+          window.openLetterTemplateModal();
+        } else if (typeof window.toast === 'function') {
           window.toast('Authorization template is unavailable', 'error');
         }
-      }
-    });
-
-    if (templateApply.dataset.authorizationActionHookBound !== 'true') {
-      templateApply.dataset.authorizationActionHookBound = 'true';
-
-      templateApply.addEventListener('click', () => {
-        if (!window.authorizationAddDirectlyToPacket) return;
-        window.authorizationAddDirectlyToPacket = false;
-
-        setTimeout(async () => {
-          try {
-            if (typeof window.insertLetterIntoPacket !== 'function') {
-              throw new Error('Authorization packet insertion is unavailable.');
-            }
-            await window.insertLetterIntoPacket();
-          } catch (err) {
-            console.error('Authorization packet insertion failed', err);
-            if (typeof window.toast === 'function') {
-              window.toast('Could not add authorization to packet', 'error');
-            }
-          } finally {
-            templateApply.textContent = 'Populate Letter';
-          }
-        }, 0);
       });
     }
 
-    const resetAuthorizationAction = () => {
+    const reset = () => {
       window.authorizationAddDirectlyToPacket = false;
-      templateApply.textContent = 'Populate Letter';
+      const currentApply = document.getElementById(TEMPLATE_APPLY_ID);
+      if (currentApply) currentApply.textContent = 'Populate Letter';
     };
-
-    document.getElementById('letterTemplateCancelBtn')?.addEventListener('click', resetAuthorizationAction, { once: false });
-    document.getElementById('letterTemplateCloseBtn')?.addEventListener('click', resetAuthorizationAction, { once: false });
+    document.getElementById('letterTemplateCancelBtn')?.addEventListener('click', reset);
+    document.getElementById('letterTemplateCloseBtn')?.addEventListener('click', reset);
   }
 
   if (document.readyState === 'loading') {
