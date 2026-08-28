@@ -1,8 +1,6 @@
 name: Rename Merge Navigation
 
-on:
-  push:
-    branches: [main]
+on: push
 
 permissions:
   contents: write
@@ -11,25 +9,15 @@ jobs:
   rename:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Rename navigation label
-        shell: bash
+      - uses: actions/checkout@v4
+      - name: Rename label and remove workflow
         run: |
           if grep -q 'Merge & Organize' index.html; then
-            python - <<'PY'
-from pathlib import Path
-p = Path('index.html')
-s = p.read_text(encoding='utf-8')
-s = s.replace('title="Merge & Organize"', 'title="M&O"')
-s = s.replace('<span class="nav-label">Merge & Organize</span>', '<span class="nav-label">M&O</span>')
-p.write_text(s, encoding='utf-8')
-PY
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git rm .github/workflows/rename-mo.yml
+            sed -i 's/title="Merge & Organize"/title="M\&O"/g; s#<span class="nav-label">Merge & Organize</span>#<span class="nav-label">M\&O</span>#g' index.html
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git add index.html
-            git commit -m "Rename Merge & Organize navigation to M&O"
+            git rm .github/workflows/rename-mo.yml
+            git commit -m 'Rename Merge & Organize navigation to M&O'
             git push
           fi
