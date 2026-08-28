@@ -1,0 +1,38 @@
+/* Consistent modal treatment: dim the app without blurring it. */
+.pdf-preview-modal,
+.packet-compress-panel,
+.save-export-modal,
+.save-template-modal,
+.letter-template-modal,
+.settings-modal {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(0, 0, 0, 0.52) !important;
+}
+
+/* Keep the modal itself crisp. */
+.pdf-preview-shell,
+.packet-compress-card,
+.save-export-card,
+.save-template-card,
+.letter-template-card,
+.settings-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Smooth, consistent state changes. */
+.pdf-preview-modal,
+.packet-compress-panel,
+.save-export-modal,
+.save-template-modal,
+.letter-template-modal,
+.settings-modal,
+.pdf-preview-shell,
+.packet-compress-card,
+.save-export-card,
+.save-template-card,
+.letter-template-card,
+.settings-card {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
