@@ -47,10 +47,10 @@ function sendFile(filePath, res) {
       const html = data.toString('utf8');
       const injected = html.replace(
         /<link rel=["']stylesheet["'] href=["']design\.css["']\s*\/?\s*>/i,
-        '<link rel="stylesheet" href="design.css">\n  <link rel="stylesheet" href="editor-canvas-fit.css">'
+        '<link rel="stylesheet" href="design.css">\n  <link rel="stylesheet" href="editor-fit.css">'
       ).replace(
         /<script src=["']functions\.js["']><\/script>/i,
-        '<script src="functions.js"></script>\n  <script src="drop-scope.js"></script>\n  <script src="rotate-fix.js"></script>'
+        '<script src="functions.js"></script>\n  <script src="drop-scope.js"></script>\n  <script src="rotate-fix.js"></script>\n  <script src="editor-fit.js"></script>'
       );
       output = Buffer.from(injected, 'utf8');
     }
