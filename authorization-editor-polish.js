@@ -20,13 +20,14 @@
     group.className = 'authorization-doc-layout-group';
     group.setAttribute('aria-label', 'Page layout');
 
-    const groups = Array.from(settingsBar.querySelectorAll('.settings-group'));
-    groups.forEach((item) => group.appendChild(item));
-
-    toolbar.appendChild(document.createElement('span')).className = 'authorization-doc-separator';
+    Array.from(settingsBar.querySelectorAll('.settings-group')).forEach((item) => group.appendChild(item));
+    const separator = document.createElement('span');
+    separator.className = 'authorization-doc-separator';
+    toolbar.appendChild(separator);
     toolbar.appendChild(group);
-    settingsBar.dataset.movedToDocumentToolbar = '1';
+
     settingsBar.hidden = true;
+    settingsBar.dataset.movedToDocumentToolbar = '1';
   }
 
   function normalizeFontSizeSelect() {
@@ -41,8 +42,7 @@
       select.appendChild(option);
     });
 
-    // 12 pt is the standard document body size. The existing command accepts
-    // CSS pixels, so 12 pt is represented as 16 CSS px internally.
+    // 12 pt = 16 CSS px at the standard 96 CSS px/in baseline.
     select.value = String(Math.round(12 * PX_PER_PT * 1000) / 1000);
     select.title = 'Font size (pt)';
     select.setAttribute('aria-label', 'Font size (points)');
@@ -54,23 +54,16 @@
     normalizeFontSizeSelect();
   }
 
-  function mount() {
+  function startObserver() {
     polish();
-    if (!document.getElementById('authorizationDocumentToolbar')) return;
-
-    // The document editor is created dynamically. Re-run once when the
-    // Authorization view is first opened or rebuilt.
-    const observer = new MutationObserver(() => {
-      const ready = document.getElementById('authorizationDocumentToolbar');
-      if (ready) polish();
-    });
+    const observer = new MutationObserver(() => polish());
     observer.observe(document.body, { childList: true, subtree: true });
-    window.setTimeout(() => observer.disconnect(), 5000);
+    window.setTimeout(() => observer.disconnect(), 10000);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mount, { once: true });
+    document.addEventListener('DOMContentLoaded', startObserver, { once: true });
   } else {
-    mount();
+    startObserver();
   }
 })();
