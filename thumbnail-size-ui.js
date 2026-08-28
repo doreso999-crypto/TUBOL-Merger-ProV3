@@ -1,10 +1,10 @@
-/* M&O thumbnail-size control. Keeps thumbnail cards fixed-size and user-selectable. */
+/* M&O thumbnail-size control. Fixed-size cards with compact zoom labels. */
 (() => {
   const SIZES = {
-    small:  { label: 'Small',   width: 150 },
-    normal: { label: 'Normal',  width: 200 },
-    large:  { label: 'Large',   width: 260 },
-    xlarge: { label: 'Extra Large', width: 320 },
+    normal: { label: 'Normal', width: 200 },
+    '2x': { label: '2×', width: 260 },
+    '3x': { label: '3×', width: 320 },
+    '4x': { label: '4×', width: 380 },
   };
 
   function apply(size) {
@@ -14,7 +14,7 @@
     if (!grid) return;
     grid.dataset.thumbnailSize = size;
     grid.style.setProperty('--thumbnail-width', `${config.width}px`);
-    if (button) button.textContent = `Thumbnails: ${config.label}`;
+    if (button) button.textContent = config.label;
     localStorage.setItem('pdfWorkspaceThumbnailSize', size);
   }
 
@@ -28,17 +28,18 @@
     wrap.id = 'thumbnailSizeWrap';
     wrap.className = 'thumbnail-size-wrap';
     wrap.innerHTML = `
-      <button id="thumbnailSizeBtn" type="button" class="mini-btn thumbnail-size-btn" aria-haspopup="listbox" aria-expanded="false">Thumbnails: Normal</button>
+      <button id="thumbnailSizeBtn" type="button" class="mini-btn thumbnail-size-btn" aria-haspopup="listbox" aria-expanded="false">Normal</button>
       <div id="thumbnailSizeMenu" class="thumbnail-size-menu" role="listbox" aria-label="Thumbnail size">
-        <button type="button" role="option" data-size="small">Small</button>
         <button type="button" role="option" data-size="normal">Normal</button>
-        <button type="button" role="option" data-size="large">Large</button>
-        <button type="button" role="option" data-size="xlarge">Extra Large</button>
+        <button type="button" role="option" data-size="2x">2×</button>
+        <button type="button" role="option" data-size="3x">3×</button>
+        <button type="button" role="option" data-size="4x">4×</button>
       </div>
     `;
 
-    // Keep the thumbnail control aligned with Rotate / Duplicate / Delete / Clear all.
-    actions.appendChild(wrap);
+    // Thumbnail size belongs immediately before Rotate in the organizer controls.
+    const rotateButton = document.getElementById('rotateLeftBtn');
+    actions.insertBefore(wrap, rotateButton || actions.firstElementChild);
 
     const button = wrap.querySelector('#thumbnailSizeBtn');
     const menu = wrap.querySelector('#thumbnailSizeMenu');
