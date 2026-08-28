@@ -1,20 +1,22 @@
 /* TUBOL PDF Workspace loader.
    M&O Authorization is isolated in authorization-mdo.js/css.
-   The visible Authorization Letter editor remains disabled. */
+   The visible Authorization Letter editor remains disabled.
+   The logo remains visible and decorative; sidebar/thumbnail triggers are disabled. */
 
 document.write(`
   <style id="tubol-authorization-editor-disabled">
     #letterView,
-    [data-view="letterView"],
-    .sidebar,
-    #brandSidebarToggle,
-    .thumbnail-size-wrap,
+    [data-view="letterView"] {
+      display: none !important;
+    }
+    #thumbnailSizeWrap,
     #thumbnailSizeBtn,
     #thumbnailSizeMenu {
       display: none !important;
     }
-    .workspace {
-      grid-template-columns: minmax(0, 1fr) !important;
+    #brandSidebarToggle {
+      cursor: default !important;
+      pointer-events: none !important;
     }
   </style>
   <link rel="stylesheet" href="responsive-sidebar-hidden.css">
@@ -27,17 +29,3 @@ document.write(`
   <script src="workspace-ui-fixes.js"><\/script>
   <script src="authorization-mdo.js"><\/script>
 `);
-
-(() => {
-  function removeLegacyMdoControls() {
-    document.querySelectorAll('.thumbnail-size-wrap, #thumbnailSizeBtn, #thumbnailSizeMenu, .sidebar, #brandSidebarToggle').forEach(el => el.remove());
-    const workspace = document.querySelector('.workspace');
-    if (workspace) workspace.style.setProperty('grid-template-columns', 'minmax(0, 1fr)', 'important');
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', removeLegacyMdoControls, { once: true });
-  } else {
-    removeLegacyMdoControls();
-  }
-})();
