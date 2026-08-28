@@ -9,7 +9,6 @@
   line-height: 0 !important;
   margin: 8px 0 !important;
   vertical-align: middle !important;
-  user-select: none !important;
 }
 
 .tubol-image-object > img {
@@ -26,8 +25,21 @@
 }
 
 .tubol-image-object.tubol-image-cropping {
+  overflow: visible !important;
   outline: 2px solid #111;
   outline-offset: -1px;
+  isolation: isolate;
+}
+
+/* Crop mode keeps the entire image visible while dimming everything outside the crop frame. */
+.tubol-image-object.tubol-image-cropping::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  background: transparent;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.40);
 }
 
 .tubol-image-overlay {
