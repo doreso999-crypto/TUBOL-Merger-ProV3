@@ -47,22 +47,20 @@
 
   function removeAdventureTheme() {
     const select = document.getElementById('themeSelect');
-    const option = select?.querySelector('option[value="adventure"]');
-    option?.remove();
-
+    if (select) {
+      select.querySelector('option[value="adventure"]')?.remove();
+    }
     if (localStorage.getItem('pdfWorkspaceTheme') === 'adventure') {
       localStorage.setItem('pdfWorkspaceTheme', 'light');
     }
   }
 
-  function setup() {
-    removeAdventureTheme();
-    installRotationRenderer();
-  }
+  // functions.js runs near the end of <body>, so the settings controls already exist.
+  // Install the renderer and clean the theme before the core DOMContentLoaded initializer runs.
+  installRotationRenderer();
+  removeAdventureTheme();
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setup, { once: true });
-  } else {
-    setup();
+    document.addEventListener('DOMContentLoaded', removeAdventureTheme, { once: true });
   }
 })();
