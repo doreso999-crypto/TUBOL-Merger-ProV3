@@ -1,16 +1,52 @@
-/* M&O rotation + theme cleanup fixes. */
+/* M&O rendering stability, rotation, and theme cleanup fixes. */
 (() => {
-  function installRotationRenderer() {
-    if (typeof window.getPdfJsDocument !== 'function') return;
+  const pdfDocumentPromises = new WeakMap();
 
-    window.renderPageThumb = async function renderPageThumb(pageEntry, canvas) {
+  function stablePdfDocument(bytes) {
+    if (!bytes || !bytes.buffer) throw new Error('PDF data unavailable.');
+    const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    const key = source.buffer;
+
+    if (pdfDocumentPromises.has(key)) return pdfDocumentPromises.get(key);
+
+    // Give PDF.js a private copy. Its worker may transfer/detach its input buffer.
+    const workerBytes = new Uint8Array(source);
+    const promise = pdfjsLib.getDocument({
+      data: workerBytes,
+      useWorkerFetch: true,
+      isEvalSupported: true,
+      verbosity: 0,
+      disableAutoFetch: false,
+      disableStream: false,
+    }).promise.catch(async err => {
+      // Keep the fallback independent from the first worker buffer.
+      const fallbackBytes = new Uint8Array(source);
+      return pdfjsLib.getDocument({
+        data: fallbackBytes,
+        disableWorker: true,
+        verbosity: 0,
+      }).promise.catch(() => { throw err; });
+    });
+
+    pdfDocumentPromises.set(key, promise);
+    return promise;
+  }
+
+  function installStablePdfDocumentLoader() {
+    window.getPdfJsDocument = function getPdfJsDocumentStable(bytes) {
+      return stablePdfDocument(bytes);
+    };
+  }
+
+  function installRotationRenderer() {
+    window.renderPageThumb = async function renderPageThumbStable(pageEntry, canvas) {
       const container = canvas?.parentElement;
       const placeholder = container?.querySelector('.thumb-loading');
       if (!container || !canvas) return;
 
       try {
         await new Promise(requestAnimationFrame);
-        const pdf = await window.getPdfJsDocument(pageEntry.pdfBytes);
+        const pdf = await stablePdfDocument(pageEntry.pdfBytes);
         const page = await pdf.getPage(pageEntry.sourceIndex + 1);
         const rotation = ((pageEntry.rotation || 0) % 360 + 360) % 360;
         const width = Math.max(130, container.clientWidth || 180);
@@ -47,16 +83,15 @@
 
   function removeAdventureTheme() {
     const select = document.getElementById('themeSelect');
-    if (select) {
-      select.querySelector('option[value="adventure"]')?.remove();
-    }
+    if (select) select.querySelector('option[value="adventure"]')?.remove();
     if (localStorage.getItem('pdfWorkspaceTheme') === 'adventure') {
       localStorage.setItem('pdfWorkspaceTheme', 'light');
     }
   }
 
-  // functions.js runs near the end of <body>, so the settings controls already exist.
-  // Install the renderer and clean the theme before the core DOMContentLoaded initializer runs.
+  // functions.js is loaded near the end of <body>; installing now updates the
+  // global bindings before the core DOMContentLoaded initializer runs.
+  installStablePdfDocumentLoader();
   installRotationRenderer();
   removeAdventureTheme();
 
