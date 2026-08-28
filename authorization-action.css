@@ -1,6 +1,0 @@
-/* M&O Authorization action only. No document-editor dependencies. */
-#mergeView #openAuthorizationFromMergeBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
