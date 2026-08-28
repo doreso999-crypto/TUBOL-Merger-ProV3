@@ -1,0 +1,51 @@
+/* Authorization Letter document toolbar polish. */
+
+#letterView #editorSettingsBar[hidden] { display: none !important; }
+
+#letterView .authorization-doc-layout-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 0 2px;
+}
+
+#letterView .authorization-doc-layout-group .settings-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+#letterView .authorization-doc-layout-group .settings-label {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted, #66727f);
+  white-space: nowrap;
+}
+
+#letterView .authorization-doc-layout-group select {
+  height: 32px;
+  min-width: 96px;
+}
+
+#letterView .authorization-doc-layout-group .settings-group:first-child select {
+  min-width: 156px;
+}
+
+#letterView .authorization-doc-separator {
+  width: 1px;
+  height: 22px;
+  background: var(--border, #d7dee7);
+  flex: 0 0 auto;
+}
+
+#letterView .authorization-doc-size {
+  min-width: 66px;
+}
+
+@media (max-width: 900px) {
+  #letterView .authorization-doc-layout-group .settings-label { display: none; }
+  #letterView .authorization-doc-layout-group select { min-width: 84px; }
+  #letterView .authorization-doc-layout-group .settings-group:first-child select { min-width: 120px; }
+}
