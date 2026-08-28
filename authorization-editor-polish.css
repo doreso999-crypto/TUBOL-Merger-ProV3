@@ -109,29 +109,16 @@
   border-radius: 0;
 }
 
-/* Authorization editor container fills the available viewport beneath the app topbar. */
+/* Remove the extra wrapper's own box so it contributes no background, padding, or height. */
 #letterView .authorization-page-wrap-flat {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: calc(100vh - 82px);
-  min-height: 0;
-  max-width: none;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  overflow: auto;
+  display: contents;
 }
 
 #letterView .authorization-page-wrap-flat .authorization-doc-toolbar {
-  flex: 0 0 auto;
+  flex: none;
 }
 
 #letterView .authorization-page-wrap-flat .letter-page {
-  flex: 0 0 auto;
   margin: 0 auto;
 }
 
@@ -205,7 +192,6 @@
   white-space: nowrap;
 }
 
-/* Make the entire Authorization workspace consume the available height. */
 #letterView {
   height: 100%;
   min-height: 0;
@@ -217,19 +203,13 @@
 }
 
 #letterView .authorization-editor-flat {
-  height: calc(100% - 8px);
+  height: auto;
   min-height: 0;
 }
 
 #letterView .authorization-editor-flat-card {
-  height: 100%;
+  height: auto;
   min-height: 0;
-}
-
-#letterView .authorization-page-wrap-flat {
-  height: 100%;
-  min-height: 0;
-  flex: 1 1 auto;
 }
 
 @media (max-width: 760px) {
