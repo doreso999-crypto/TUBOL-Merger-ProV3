@@ -11,15 +11,20 @@
     executive: { w: 696, h: 1008 },
     'half-letter': { w: 528, h: 816 },
   };
+  const MARGINS = {
+    narrow: '48px', compact: '72px', normal: '96px', comfortable: '120px', wide: '144px', 'extra-wide': '192px'
+  };
 
   let paginating = false;
   let paginationTimer = 0;
 
   const getEditor = () => document.getElementById('letterEditor');
   const getSpec = () => SPECS[document.getElementById('paperSizeSelect')?.value || 'letter'] || SPECS.letter;
+  const getMargin = () => MARGINS[document.getElementById('marginSelect')?.value || 'normal'] || MARGINS.normal;
 
   function pageStyle(page, spec) {
     page.classList.add('letter-page', 'authorization-page');
+    page.setAttribute('contenteditable', 'true');
     page.style.setProperty('width', `${spec.w}px`, 'important');
     page.style.setProperty('min-width', `${spec.w}px`, 'important');
     page.style.setProperty('max-width', `${spec.w}px`, 'important');
@@ -29,14 +34,14 @@
     page.style.setProperty('box-sizing', 'border-box', 'important');
     page.style.setProperty('overflow', 'hidden', 'important');
     page.style.setProperty('flex', '0 0 auto', 'important');
-    page.style.setProperty('padding', getComputedStyle(document.documentElement).getPropertyValue('--page-pad') || '96px', '');
+    page.style.setProperty('padding', getMargin(), '');
   }
 
   function makePage(spec) {
     const page = document.createElement('div');
     page.className = 'letter-page authorization-page';
     page.setAttribute('data-authorization-page', '');
-    page.contentEditable = 'true';
+    page.setAttribute('contenteditable', 'true');
     pageStyle(page, spec);
     return page;
   }
@@ -45,13 +50,13 @@
     const editor = getEditor();
     if (!editor) return [];
 
-    const pages = Array.from(editor.children).filter((node) => node.matches('.authorization-page'));
-    if (pages.length && pages.length === editor.children.length) return pages;
+    const children = Array.from(editor.children);
+    const pages = children.filter((node) => node.matches('.authorization-page'));
+    if (pages.length && pages.length === children.length) return pages;
 
-    const spec = getSpec();
     const existing = Array.from(editor.childNodes);
     editor.innerHTML = '';
-    const first = makePage(spec);
+    const first = makePage(getSpec());
     editor.appendChild(first);
     existing.forEach((node) => first.appendChild(node));
     if (!first.childNodes.length) first.innerHTML = '<p><br></p>';
@@ -63,39 +68,41 @@
     return editor ? Array.from(editor.querySelectorAll(':scope > .authorization-page')) : [];
   }
 
+  function selectionOffsets(root) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !root.contains(sel.anchorNode)) return null;
+    const range = sel.getRangeAt(0);
+    const startRange = document.createRange();
+    startRange.selectNodeContents(root);
+    startRange.setEnd(range.startContainer, range.startOffset);
+    const endRange = document.createRange();
+    endRange.selectNodeContents(root);
+    endRange.setEnd(range.endContainer, range.endOffset);
+    return { start: startRange.toString().length, end: endRange.toString().length };
+  }
+
   function textPoint(root, target) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let remaining = Math.max(0, target);
     let node;
     while ((node = walker.nextNode())) {
-      if (remaining <= node.nodeValue.length) return { node, offset: remaining };
-      remaining -= node.nodeValue.length;
+      const len = node.nodeValue.length;
+      if (remaining <= len) return { node, offset: remaining };
+      remaining -= len;
     }
     const last = root.lastChild;
-    return { node: last || root, offset: last?.nodeType === Node.TEXT_NODE ? last.nodeValue.length : last?.childNodes.length || 0 };
-  }
-
-  function selectionOffsets(root) {
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount || !root.contains(sel.anchorNode)) return null;
-    const range = sel.getRangeAt(0);
-    const before = document.createRange();
-    before.selectNodeContents(root);
-    before.setEnd(range.startContainer, range.startOffset);
-    const start = before.toString().length;
-    before.setStart(range.endContainer, range.endOffset);
-    const end = before.toString().length;
-    return { start, end };
+    if (last?.nodeType === Node.TEXT_NODE) return { node: last, offset: last.nodeValue.length };
+    return { node: last || root, offset: last?.childNodes?.length || 0 };
   }
 
   function restoreSelection(root, saved) {
     if (!saved) return;
     try {
-      const range = document.createRange();
       const start = textPoint(root, saved.start);
       const end = textPoint(root, saved.end);
-      range.setStart(start.node, Math.min(start.offset, start.node.nodeType === Node.TEXT_NODE ? start.node.nodeValue.length : start.node.childNodes.length));
-      range.setEnd(end.node, Math.min(end.offset, end.node.nodeType === Node.TEXT_NODE ? end.node.nodeValue.length : end.node.childNodes.length));
+      const range = document.createRange();
+      range.setStart(start.node, start.offset);
+      range.setEnd(end.node, end.offset);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
@@ -104,7 +111,7 @@
 
   function splitElement(block, page, nextPage, availableHeight) {
     const textLength = (block.textContent || '').length;
-    if (!textLength) return false;
+    if (textLength < 2) return false;
 
     const makeSplit = (offset) => {
       const a = block.cloneNode(true);
@@ -116,16 +123,21 @@
       let n;
       while ((n = aw.nextNode())) aTexts.push(n);
       while ((n = bw.nextNode())) bTexts.push(n);
+
       let consumed = 0;
       aTexts.forEach((node, i) => {
         const len = node.nodeValue.length;
         const bNode = bTexts[i];
-        if (consumed >= offset) node.nodeValue = '';
-        else if (consumed + len > offset) {
+        if (consumed >= offset) {
+          node.nodeValue = '';
+        } else if (consumed + len > offset) {
           const cut = offset - consumed;
-          node.nodeValue = node.nodeValue.slice(0, cut);
-          if (bNode) bNode.nodeValue = bNode.nodeValue.slice(cut);
-        } else if (bNode) bNode.nodeValue = '';
+          const original = node.nodeValue;
+          node.nodeValue = original.slice(0, cut);
+          if (bNode) bNode.nodeValue = original.slice(cut);
+        } else if (bNode) {
+          bNode.nodeValue = '';
+        }
         consumed += len;
       });
       return [a, b];
@@ -143,8 +155,12 @@
       const fits = page.scrollHeight <= availableHeight + 1;
       nextPage.removeChild(b);
       page.replaceChild(block, a);
-      if (fits) { best = mid; low = mid + 1; }
-      else high = mid - 1;
+      if (fits) {
+        best = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
     }
 
     if (!best) return false;
@@ -155,9 +171,8 @@
   }
 
   function moveOverflow(page, nextPage) {
-    const spec = getSpec();
-    pageStyle(page, spec);
-    pageStyle(nextPage, spec);
+    pageStyle(page, getSpec());
+    pageStyle(nextPage, getSpec());
 
     let guard = 0;
     while (page.scrollHeight > page.clientHeight + 1 && guard++ < 500) {
@@ -269,12 +284,13 @@
       const editor = getEditor();
       const spec = getSpec();
       const clone = editor.cloneNode(true);
-      clone.style.width = `${spec.cssW || spec.w}px`;
+      clone.style.width = `${spec.w}px`;
       clone.style.height = 'auto';
       clone.style.minHeight = '0';
       clone.style.maxHeight = 'none';
       clone.style.overflow = 'visible';
       clone.style.padding = '0';
+
       clone.querySelectorAll('.authorization-page').forEach((page) => {
         page.style.width = `${spec.w}px`;
         page.style.height = `${spec.h}px`;
@@ -291,7 +307,7 @@
       const wrapper = document.createElement('div');
       wrapper.style.background = '#fff';
       wrapper.style.padding = '0';
-      wrapper.style.width = `${spec.cssW || spec.w}px`;
+      wrapper.style.width = `${spec.w}px`;
       wrapper.style.height = 'auto';
       wrapper.appendChild(clone);
 
@@ -299,7 +315,7 @@
       root.style.position = 'fixed';
       root.style.left = '-100000px';
       root.style.top = '0';
-      root.style.width = `${spec.cssW || spec.w}px`;
+      root.style.width = `${spec.w}px`;
       root.style.background = '#fff';
       root.appendChild(wrapper);
       document.body.appendChild(root);
@@ -317,6 +333,7 @@
         root.remove();
       }
     };
+
     exportFn.__pagedOverride = true;
     exportFn.__original = original;
     window.createLetterPdfBlob = exportFn;
