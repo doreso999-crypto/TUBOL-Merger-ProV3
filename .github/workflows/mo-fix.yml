@@ -1,0 +1,19 @@
+name: M and O label fix
+on: [push]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          if grep -q 'Merge & Organize' index.html; then
+            python -c "from pathlib import Path; p=Path('index.html'); s=p.read_text(); s=s.replace('title=\"Merge & Organize\"','title=\"M&O\"').replace('<span class=\"nav-label\">Merge & Organize</span>','<span class=\"nav-label\">M&O</span>'); p.write_text(s)"
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git rm .github/workflows/rename-mo.yml .github/workflows/mo-fix.yml
+            git add index.html
+            git commit -m 'Rename Merge and Organize navigation to M&O'
+            git push
+          fi
