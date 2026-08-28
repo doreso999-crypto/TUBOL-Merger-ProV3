@@ -1,6 +1,4 @@
-/* Authorization Letter physical-page size lock.
-   Keeps the visible document sheet at the selected paper dimensions.
-   This does not implement pagination; overflow remains inside the sheet. */
+/* Authorization Letter physical-page size lock + automatic pagination. */
 (function () {
   'use strict';
 
@@ -14,13 +12,14 @@
     'half-letter': { w: 528, h: 816 },
   };
 
-  function lockPage() {
-    const page = document.getElementById('letterEditor');
-    if (!page) return;
+  let paginating = false;
+  let paginationTimer = 0;
 
-    const key = document.getElementById('paperSizeSelect')?.value || 'letter';
-    const spec = SPECS[key] || SPECS.letter;
+  const getEditor = () => document.getElementById('letterEditor');
+  const getSpec = () => SPECS[document.getElementById('paperSizeSelect')?.value || 'letter'] || SPECS.letter;
 
+  function pageStyle(page, spec) {
+    page.classList.add('letter-page', 'authorization-page');
     page.style.setProperty('width', `${spec.w}px`, 'important');
     page.style.setProperty('min-width', `${spec.w}px`, 'important');
     page.style.setProperty('max-width', `${spec.w}px`, 'important');
@@ -28,36 +27,318 @@
     page.style.setProperty('min-height', `${spec.h}px`, 'important');
     page.style.setProperty('max-height', `${spec.h}px`, 'important');
     page.style.setProperty('box-sizing', 'border-box', 'important');
-    page.style.setProperty('overflow-y', 'auto', 'important');
-    page.style.setProperty('overflow-x', 'hidden', 'important');
+    page.style.setProperty('overflow', 'hidden', 'important');
     page.style.setProperty('flex', '0 0 auto', 'important');
+    page.style.setProperty('padding', getComputedStyle(document.documentElement).getPropertyValue('--page-pad') || '96px', '');
+  }
+
+  function makePage(spec) {
+    const page = document.createElement('div');
+    page.className = 'letter-page authorization-page';
+    page.setAttribute('data-authorization-page', '');
+    page.contentEditable = 'true';
+    pageStyle(page, spec);
+    return page;
+  }
+
+  function ensurePages() {
+    const editor = getEditor();
+    if (!editor) return [];
+
+    const pages = Array.from(editor.children).filter((node) => node.matches('.authorization-page'));
+    if (pages.length && pages.length === editor.children.length) return pages;
+
+    const spec = getSpec();
+    const existing = Array.from(editor.childNodes);
+    editor.innerHTML = '';
+    const first = makePage(spec);
+    editor.appendChild(first);
+    existing.forEach((node) => first.appendChild(node));
+    if (!first.childNodes.length) first.innerHTML = '<p><br></p>';
+    return [first];
+  }
+
+  function allPages() {
+    const editor = getEditor();
+    return editor ? Array.from(editor.querySelectorAll(':scope > .authorization-page')) : [];
+  }
+
+  function textPoint(root, target) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let remaining = Math.max(0, target);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (remaining <= node.nodeValue.length) return { node, offset: remaining };
+      remaining -= node.nodeValue.length;
+    }
+    const last = root.lastChild;
+    return { node: last || root, offset: last?.nodeType === Node.TEXT_NODE ? last.nodeValue.length : last?.childNodes.length || 0 };
+  }
+
+  function selectionOffsets(root) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !root.contains(sel.anchorNode)) return null;
+    const range = sel.getRangeAt(0);
+    const before = document.createRange();
+    before.selectNodeContents(root);
+    before.setEnd(range.startContainer, range.startOffset);
+    const start = before.toString().length;
+    before.setStart(range.endContainer, range.endOffset);
+    const end = before.toString().length;
+    return { start, end };
+  }
+
+  function restoreSelection(root, saved) {
+    if (!saved) return;
+    try {
+      const range = document.createRange();
+      const start = textPoint(root, saved.start);
+      const end = textPoint(root, saved.end);
+      range.setStart(start.node, Math.min(start.offset, start.node.nodeType === Node.TEXT_NODE ? start.node.nodeValue.length : start.node.childNodes.length));
+      range.setEnd(end.node, Math.min(end.offset, end.node.nodeType === Node.TEXT_NODE ? end.node.nodeValue.length : end.node.childNodes.length));
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (_) {}
+  }
+
+  function splitElement(block, page, nextPage, availableHeight) {
+    const textLength = (block.textContent || '').length;
+    if (!textLength) return false;
+
+    const makeSplit = (offset) => {
+      const a = block.cloneNode(true);
+      const b = block.cloneNode(true);
+      const aTexts = [];
+      const bTexts = [];
+      const aw = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
+      const bw = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = aw.nextNode())) aTexts.push(n);
+      while ((n = bw.nextNode())) bTexts.push(n);
+      let consumed = 0;
+      aTexts.forEach((node, i) => {
+        const len = node.nodeValue.length;
+        const bNode = bTexts[i];
+        if (consumed >= offset) node.nodeValue = '';
+        else if (consumed + len > offset) {
+          const cut = offset - consumed;
+          node.nodeValue = node.nodeValue.slice(0, cut);
+          if (bNode) bNode.nodeValue = bNode.nodeValue.slice(cut);
+        } else if (bNode) bNode.nodeValue = '';
+        consumed += len;
+      });
+      return [a, b];
+    };
+
+    let low = 1;
+    let high = textLength - 1;
+    let best = 0;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const [a, b] = makeSplit(mid);
+      page.replaceChild(a, block);
+      nextPage.insertBefore(b, nextPage.firstChild);
+      const fits = page.scrollHeight <= availableHeight + 1;
+      nextPage.removeChild(b);
+      page.replaceChild(block, a);
+      if (fits) { best = mid; low = mid + 1; }
+      else high = mid - 1;
+    }
+
+    if (!best) return false;
+    const [a, b] = makeSplit(best);
+    page.replaceChild(a, block);
+    nextPage.insertBefore(b, nextPage.firstChild);
+    return true;
+  }
+
+  function moveOverflow(page, nextPage) {
+    const spec = getSpec();
+    pageStyle(page, spec);
+    pageStyle(nextPage, spec);
+
+    let guard = 0;
+    while (page.scrollHeight > page.clientHeight + 1 && guard++ < 500) {
+      const children = Array.from(page.children);
+      if (!children.length) break;
+
+      const last = children[children.length - 1];
+      if (last.classList.contains('authorization-page-break')) {
+        last.remove();
+        continue;
+      }
+
+      if (children.length === 1) {
+        if (splitElement(last, page, nextPage, page.clientHeight)) continue;
+        page.removeChild(last);
+        nextPage.insertBefore(last, nextPage.firstChild);
+        continue;
+      }
+
+      page.removeChild(last);
+      nextPage.insertBefore(last, nextPage.firstChild);
+    }
+  }
+
+  function handleExplicitBreaks(pages, spec) {
+    for (let i = 0; i < pages.length; i += 1) {
+      const page = pages[i];
+      const marker = Array.from(page.children).find((el) => el.classList.contains('authorization-page-break'));
+      if (!marker) continue;
+
+      let next = pages[i + 1];
+      if (!next) {
+        next = makePage(spec);
+        page.parentNode.insertBefore(next, page.nextSibling);
+        pages.splice(i + 1, 0, next);
+      }
+
+      const children = Array.from(page.children);
+      const markerIndex = children.indexOf(marker);
+      children.slice(markerIndex + 1).forEach((node) => next.appendChild(node));
+      marker.remove();
+    }
+  }
+
+  function paginate() {
+    const editor = getEditor();
+    if (!editor || paginating) return;
+    paginating = true;
+
+    try {
+      const spec = getSpec();
+      const savedSelection = selectionOffsets(editor);
+      editor.classList.add('authorization-document-pages');
+      editor.style.setProperty('width', `${spec.w}px`, 'important');
+      editor.style.setProperty('min-width', `${spec.w}px`, 'important');
+      editor.style.setProperty('max-width', `${spec.w}px`, 'important');
+      editor.style.setProperty('height', 'auto', 'important');
+      editor.style.setProperty('min-height', '0', 'important');
+      editor.style.setProperty('max-height', 'none', 'important');
+      editor.style.setProperty('overflow', 'visible', 'important');
+      editor.style.setProperty('padding', '0', 'important');
+      editor.style.setProperty('border', '0', 'important');
+      editor.style.setProperty('box-shadow', 'none', 'important');
+
+      let pages = ensurePages();
+      pages.forEach((page) => pageStyle(page, spec));
+      handleExplicitBreaks(pages, spec);
+
+      for (let i = 0; i < pages.length; i += 1) {
+        const page = pages[i];
+        let next = pages[i + 1];
+        if (!next) {
+          next = makePage(spec);
+          editor.appendChild(next);
+          pages.push(next);
+        }
+        moveOverflow(page, next);
+        if (!next.children.length && i === pages.length - 2) {
+          next.remove();
+          pages.pop();
+        }
+      }
+
+      pages = allPages();
+      pages.forEach((page, index) => {
+        page.dataset.pageNumber = String(index + 1);
+        pageStyle(page, spec);
+      });
+
+      restoreSelection(editor, savedSelection);
+      if (typeof window.saveLetter === 'function') window.saveLetter();
+    } finally {
+      paginating = false;
+    }
+  }
+
+  function schedulePagination() {
+    clearTimeout(paginationTimer);
+    paginationTimer = window.setTimeout(() => requestAnimationFrame(paginate), 40);
+  }
+
+  function overrideLetterPdfExport() {
+    if (typeof window.html2pdf !== 'function' || typeof window.createLetterPdfBlob !== 'function') return;
+    if (window.createLetterPdfBlob.__pagedOverride) return;
+
+    const original = window.createLetterPdfBlob;
+    const exportFn = async function () {
+      paginate();
+      const editor = getEditor();
+      const spec = getSpec();
+      const clone = editor.cloneNode(true);
+      clone.style.width = `${spec.cssW || spec.w}px`;
+      clone.style.height = 'auto';
+      clone.style.minHeight = '0';
+      clone.style.maxHeight = 'none';
+      clone.style.overflow = 'visible';
+      clone.style.padding = '0';
+      clone.querySelectorAll('.authorization-page').forEach((page) => {
+        page.style.width = `${spec.w}px`;
+        page.style.height = `${spec.h}px`;
+        page.style.minHeight = `${spec.h}px`;
+        page.style.maxHeight = `${spec.h}px`;
+        page.style.overflow = 'hidden';
+        page.style.margin = '0';
+        page.style.boxShadow = 'none';
+        page.style.border = '0';
+        page.style.breakAfter = 'page';
+        page.style.pageBreakAfter = 'always';
+      });
+
+      const wrapper = document.createElement('div');
+      wrapper.style.background = '#fff';
+      wrapper.style.padding = '0';
+      wrapper.style.width = `${spec.cssW || spec.w}px`;
+      wrapper.style.height = 'auto';
+      wrapper.appendChild(clone);
+
+      const root = document.createElement('div');
+      root.style.position = 'fixed';
+      root.style.left = '-100000px';
+      root.style.top = '0';
+      root.style.width = `${spec.cssW || spec.w}px`;
+      root.style.background = '#fff';
+      root.appendChild(wrapper);
+      document.body.appendChild(root);
+
+      try {
+        return await window.html2pdf().set({
+          margin: 0,
+          filename: 'AUTHORIZATION.pdf',
+          image: { type: 'jpeg', quality: .97 },
+          html2canvas: { scale: 2, backgroundColor: '#fff', useCORS: true },
+          pagebreak: { mode: ['css', 'legacy'] },
+          jsPDF: { unit: 'pt', format: spec.pdf, orientation: 'portrait' },
+        }).from(wrapper).outputPdf('blob');
+      } finally {
+        root.remove();
+      }
+    };
+    exportFn.__pagedOverride = true;
+    exportFn.__original = original;
+    window.createLetterPdfBlob = exportFn;
   }
 
   function mount() {
-    lockPage();
+    const editor = getEditor();
+    if (!editor) return;
 
-    document.getElementById('paperSizeSelect')?.addEventListener('change', () => {
-      requestAnimationFrame(lockPage);
-      setTimeout(lockPage, 50);
+    paginate();
+    editor.addEventListener('input', schedulePagination);
+    document.getElementById('paperSizeSelect')?.addEventListener('change', schedulePagination);
+    document.getElementById('marginSelect')?.addEventListener('change', schedulePagination);
+    window.addEventListener('resize', schedulePagination);
+
+    const observer = new MutationObserver(() => {
+      if (!paginating) schedulePagination();
     });
+    observer.observe(editor, { childList: true, subtree: true });
 
-    document.getElementById('marginSelect')?.addEventListener('change', () => {
-      requestAnimationFrame(lockPage);
-    });
-
-    document.getElementById('letterEditor')?.addEventListener('input', () => {
-      requestAnimationFrame(lockPage);
-    });
-
-    const observer = new MutationObserver(() => lockPage());
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class'],
-    });
-
-    window.addEventListener('resize', lockPage);
+    window.setTimeout(overrideLetterPdfExport, 0);
+    window.setTimeout(overrideLetterPdfExport, 250);
   }
 
   if (document.readyState === 'loading') {
