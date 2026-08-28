@@ -1,0 +1,57 @@
+/* Letter Editor: show the complete paper as a fit-to-view canvas. */
+#letterView .editor-layout {
+  display: block !important;
+  overflow: visible !important;
+}
+
+#letterView .editor-card {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+#letterView .letter-page-wrap {
+  position: relative !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  padding: 18px 18px 28px !important;
+  background: transparent !important;
+}
+
+#letterView #letterEditor {
+  width: 816px !important;
+  min-width: 816px !important;
+  max-width: none !important;
+  min-height: 1056px !important;
+  height: 1056px !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  transform-origin: top center !important;
+}
+
+#letterView .editor-footer {
+  background: transparent !important;
+  border-top: 0 !important;
+}
+
+#letterView.letter-fit-active .letter-page-wrap {
+  min-height: var(--letter-fit-height, 600px) !important;
+}
+
+#letterView.letter-fit-active #letterEditor {
+  transform: scale(var(--letter-fit-scale, 1));
+}
+
+@media (max-width: 900px) {
+  #letterView .letter-page-wrap { padding-inline: 8px !important; }
+}
