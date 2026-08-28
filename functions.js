@@ -9,7 +9,7 @@ document.write(`
       display: none !important;
     }
   </style>
-  <link rel="stylesheet" href="sidebar-hide.css">
+  <link rel="stylesheet" href="responsive-sidebar-hidden.css">
   <link rel="stylesheet" href="thumbnail-size.css">
   <link rel="stylesheet" href="modal-consistency.css">
   <link rel="stylesheet" href="preview-theme.css">
