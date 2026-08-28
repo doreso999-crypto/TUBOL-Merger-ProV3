@@ -1,5 +1,22 @@
 /* TUBOL PDF Workspace loader.
-   Original application remains in functions-core.js.
-   Renderer, authorization UI, thumbnail controls, UI consistency, preview theme, image handling,
-   shortcuts, document editor, toolbar cleanup, editor polish, full workspace sizing, and editor stability load before initialization. */
-document.write('<link rel="stylesheet" href="thumbnail-size.css"><link rel="stylesheet" href="modal-consistency.css"><link rel="stylesheet" href="preview-theme.css"><link rel="stylesheet" href="authorization-image-drop.css"><link rel="stylesheet" href="authorization-document-editor.css"><link rel="stylesheet" href="authorization-editor-polish.css"><link rel="stylesheet" href="full-content-workspace.css"><link rel="stylesheet" href="authorization-editor-stability.css"><script src="functions-core.js"><\/script><script src="pdf-render-fix.js"><\/script><script src="authorization-ui.js"><\/script><script src="thumbnail-size-ui.js"><\/script><script src="workspace-ui-fixes.js"><\/script><script src="authorization-image-drop.js"><\/script><script src="google-docs-shortcuts.js"><\/script><script src="authorization-document-editor.js"><\/script><script src="authorization-toolbar-runtime.js"><\/script><script src="authorization-editor-polish.js"><\/script><script src="authorization-page-size-lock.js"><\/script>');
+   Keep the working M&O Authorization insertion workflow, but remove the
+   Authorization Letter editor surface and all editor-specific enhancement scripts. */
+
+document.write(`
+  <style id="tubol-authorization-editor-disabled">
+    #letterView,
+    [data-view="letterView"] {
+      display: none !important;
+    }
+  </style>
+  <link rel="stylesheet" href="thumbnail-size.css">
+  <link rel="stylesheet" href="modal-consistency.css">
+  <link rel="stylesheet" href="preview-theme.css">
+  <link rel="stylesheet" href="full-content-workspace.css">
+  <script src="functions-core.js"><\/script>
+  <script src="pdf-render-fix.js"><\/script>
+  <script src="authorization-ui.js"><\/script>
+  <script src="thumbnail-size-ui.js"><\/script>
+  <script src="workspace-ui-fixes.js"><\/script>
+  <script src="google-docs-shortcuts.js"><\/script>
+`);
