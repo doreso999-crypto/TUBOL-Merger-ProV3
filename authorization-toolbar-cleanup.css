@@ -1,5 +1,0 @@
-/* Hide the legacy Authorization Letter formatting toolbar.
-   The existing handlers remain untouched; the new document-editor toolbar is the sole visible formatting toolbar. */
-#letterView #editorToolbar {
-  display: none !important;
-}
