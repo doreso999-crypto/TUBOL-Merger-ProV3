@@ -109,9 +109,13 @@
   border-radius: 0;
 }
 
+/* Authorization editor container fills the available viewport beneath the app topbar. */
 #letterView .authorization-page-wrap-flat {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: calc(100vh - 82px);
+  min-height: 0;
   max-width: none;
   margin: 0;
   padding: 0;
@@ -119,9 +123,15 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  overflow: auto;
+}
+
+#letterView .authorization-page-wrap-flat .authorization-doc-toolbar {
+  flex: 0 0 auto;
 }
 
 #letterView .authorization-page-wrap-flat .letter-page {
+  flex: 0 0 auto;
   margin: 0 auto;
 }
 
