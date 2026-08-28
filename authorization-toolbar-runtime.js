@@ -27,83 +27,93 @@
 
   function buildActionMenu() {
     const letterView = document.getElementById('letterView');
-    if (!letterView || document.getElementById('authorizationActionMenu')) return;
+    if (!letterView) return;
+
+    const toolbar = document.getElementById('authorizationDocumentToolbar');
+    if (!toolbar) return;
+
+    let menu = document.getElementById('authorizationActionMenu');
+
+    if (!menu) {
+      const existing = ACTIONS
+        .map(([id]) => document.getElementById(id))
+        .filter(Boolean);
+      if (!existing.length) return;
+
+      menu = document.createElement('div');
+      menu.id = 'authorizationActionMenu';
+      menu.className = 'authorization-action-menu';
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'authorization-doc-btn authorization-action-toggle';
+      toggle.setAttribute('aria-haspopup', 'menu');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.title = 'Letter actions';
+      toggle.innerHTML = '<span>Actions</span><span class="authorization-action-chevron" aria-hidden="true">⌄</span>';
+
+      const panel = document.createElement('div');
+      panel.className = 'authorization-action-panel';
+      panel.hidden = true;
+      panel.setAttribute('role', 'menu');
+
+      const closeMenu = () => {
+        panel.hidden = true;
+        menu.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      };
+
+      ACTIONS.forEach(([id, label]) => {
+        const source = document.getElementById(id);
+        if (!source) return;
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'authorization-action-item';
+        item.textContent = label;
+        item.setAttribute('role', 'menuitem');
+        item.addEventListener('click', () => {
+          source.click();
+          closeMenu();
+        });
+        panel.appendChild(item);
+        source.remove();
+      });
+
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (panel.hidden) {
+          panel.hidden = false;
+          menu.classList.add('is-open');
+          toggle.setAttribute('aria-expanded', 'true');
+        } else {
+          closeMenu();
+        }
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!menu.contains(event.target)) closeMenu();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !panel.hidden) {
+          closeMenu();
+          toggle.focus();
+        }
+      });
+
+      menu.appendChild(toggle);
+      menu.appendChild(panel);
+    }
+
+    // Keep Actions inside the document toolbar rather than the page header.
+    if (menu.parentElement !== toolbar) {
+      const spacer = toolbar.querySelector('.authorization-doc-toolbar-spacer');
+      if (spacer) toolbar.insertBefore(menu, spacer.nextSibling);
+      else toolbar.appendChild(menu);
+    }
 
     const headerActions = letterView.querySelector('.view-header .header-actions');
-    if (!headerActions) return;
-
-    const existing = ACTIONS
-      .map(([id]) => document.getElementById(id))
-      .filter(Boolean);
-    if (!existing.length) return;
-
-    const menu = document.createElement('div');
-    menu.id = 'authorizationActionMenu';
-    menu.className = 'authorization-action-menu';
-
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'btn btn-secondary authorization-action-toggle';
-    toggle.setAttribute('aria-haspopup', 'menu');
-    toggle.setAttribute('aria-expanded', 'false');
-    toggle.title = 'Letter actions';
-    toggle.innerHTML = '<span>Actions</span><span class="authorization-action-chevron" aria-hidden="true">⌄</span>';
-
-    const panel = document.createElement('div');
-    panel.className = 'authorization-action-panel';
-    panel.hidden = true;
-    panel.setAttribute('role', 'menu');
-
-    ACTIONS.forEach(([id, label]) => {
-      const source = document.getElementById(id);
-      if (!source) return;
-      const item = document.createElement('button');
-      item.type = 'button';
-      item.className = 'authorization-action-item';
-      item.textContent = label;
-      item.setAttribute('role', 'menuitem');
-      item.addEventListener('click', () => {
-        source.click();
-        closeMenu();
-      });
-      panel.appendChild(item);
-      source.remove();
-    });
-
-    function closeMenu() {
-      panel.hidden = true;
-      menu.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
-    }
-
-    function openMenu() {
-      panel.hidden = false;
-      menu.classList.add('is-open');
-      toggle.setAttribute('aria-expanded', 'true');
-    }
-
-    toggle.addEventListener('click', (event) => {
-      event.stopPropagation();
-      if (panel.hidden) openMenu();
-      else closeMenu();
-    });
-
-    document.addEventListener('click', (event) => {
-      if (!menu.contains(event.target)) closeMenu();
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !panel.hidden) {
-        closeMenu();
-        toggle.focus();
-      }
-    });
-
-    menu.appendChild(toggle);
-    menu.appendChild(panel);
-    headerActions.appendChild(menu);
-
-    headerActions.dataset.authorizationActionsCollapsed = '1';
+    if (headerActions) headerActions.removeAttribute('data-authorization-actions-collapsed');
   }
 
   function flattenEditorShell() {
