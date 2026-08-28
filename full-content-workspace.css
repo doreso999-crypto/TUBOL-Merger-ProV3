@@ -1,0 +1,7 @@
+/* Full workspace surface: no fixed max-width or viewport-height constraint. */
+.content {
+  width: 100%;
+  max-width: none;
+  min-height: calc(100vh - 72px);
+  margin: 0;
+}
