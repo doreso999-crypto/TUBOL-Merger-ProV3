@@ -1,7 +1,7 @@
 /* Authorization toolbar runtime cleanup.
-   Removes the legacy toolbar, protects native selects, and consolidates
-   Authorization Letter actions into a single clean menu without changing
-   the underlying application functions. */
+   Removes the legacy toolbar, protects native selects, consolidates
+   Authorization Letter actions, and keeps the editor shell visually clean
+   without changing the underlying application functions. */
 (function () {
   'use strict';
 
@@ -115,13 +115,42 @@
     card.classList.add('authorization-editor-flat-card');
   }
 
+  function relocateWordCount() {
+    const letterView = document.getElementById('letterView');
+    const wordCount = document.getElementById('wordCount');
+    const toolbar = document.getElementById('authorizationDocumentToolbar');
+    if (!letterView || !wordCount || !toolbar || wordCount.dataset.relocated === '1') return;
+
+    const status = document.createElement('span');
+    status.className = 'authorization-word-count';
+    status.appendChild(wordCount);
+    toolbar.appendChild(status);
+    wordCount.dataset.relocated = '1';
+
+    const footer = letterView.querySelector('.editor-footer');
+    if (footer) footer.remove();
+  }
+
+  function hidePageWrap() {
+    const letterView = document.getElementById('letterView');
+    const wrap = letterView?.querySelector('.letter-page-wrap');
+    if (!wrap) return;
+    wrap.classList.add('authorization-page-wrap-flat');
+  }
+
   function mount() {
     protectNativeSelects();
-    queueMicrotask(() => {
+    const run = () => {
       cleanupLegacyToolbar();
       buildActionMenu();
       flattenEditorShell();
-    });
+      relocateWordCount();
+      hidePageWrap();
+    };
+    queueMicrotask(run);
+    const observer = new MutationObserver(run);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.setTimeout(() => observer.disconnect(), 10000);
   }
 
   if (document.readyState === 'loading') {
