@@ -1,0 +1,32 @@
+/* Letter Editor: show one complete page without an inner scrolling canvas. */
+#letterEditorWrap {
+  overflow: visible !important;
+}
+
+.letter-page-wrap {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 18px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+}
+
+.letter-page {
+  flex: 0 0 816px !important;
+  width: 816px !important;
+  min-width: 816px !important;
+  max-width: none !important;
+  margin: 0 !important;
+  transform-origin: top center !important;
+  will-change: transform;
+}
+
+/* The editor itself remains scroll-free; only the document page is scaled. */
+.editor-card,
+.editor-card .editor-body,
+.editor-card .letter-page-wrap {
+  overflow: visible !important;
+}
