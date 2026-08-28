@@ -41,7 +41,6 @@
     const children = Array.from(editor.childNodes);
     const hasPages = children.some((node) => node.nodeType === Node.ELEMENT_NODE && node.matches('.authorization-page'));
     if (!hasPages) return children;
-
     const nodes = [];
     children.forEach((node) => {
       if (node.nodeType === Node.ELEMENT_NODE && node.matches('.authorization-page')) {
@@ -65,9 +64,7 @@
       end.selectNodeContents(root);
       end.setEnd(range.endContainer, range.endOffset);
       return { start: start.toString().length, end: end.toString().length };
-    } catch (_) {
-      return null;
-    }
+    } catch (_) { return null; }
   }
 
   function restoreSelection(root, saved) {
@@ -75,8 +72,7 @@
     try {
       const locate = (target) => {
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-        let remaining = Math.max(0, target);
-        let node;
+        let remaining = Math.max(0, target), node;
         while ((node = walker.nextNode())) {
           const len = node.nodeValue.length;
           if (remaining <= len) return { node, offset: remaining };
@@ -86,8 +82,7 @@
         if (last?.nodeType === Node.TEXT_NODE) return { node: last, offset: last.nodeValue.length };
         return { node: last || root, offset: 0 };
       };
-      const start = locate(saved.start);
-      const end = locate(saved.end);
+      const start = locate(saved.start), end = locate(saved.end);
       const range = document.createRange();
       range.setStart(start.node, start.offset);
       range.setEnd(end.node, end.offset);
@@ -118,59 +113,39 @@
   function splitElement(block, page, nextPage) {
     const textLength = (block.textContent || '').length;
     if (textLength < 2 || block.matches('table,img,hr')) return false;
-
     const makeSplit = (offset) => {
-      const a = block.cloneNode(true);
-      const b = block.cloneNode(true);
-      const aTexts = [];
-      const bTexts = [];
-      const aw = document.createTreeWalker(a, NodeFilter.SHOW_TEXT);
-      const bw = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+      const a = block.cloneNode(true), b = block.cloneNode(true);
+      const aTexts = [], bTexts = [];
+      const aw = document.createTreeWalker(a, NodeFilter.SHOW_TEXT), bw = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
       let n;
       while ((n = aw.nextNode())) aTexts.push(n);
       while ((n = bw.nextNode())) bTexts.push(n);
       let consumed = 0;
       aTexts.forEach((node, i) => {
-        const len = node.nodeValue.length;
-        const bNode = bTexts[i];
+        const len = node.nodeValue.length, bNode = bTexts[i];
         if (consumed >= offset) node.nodeValue = '';
         else if (consumed + len > offset) {
-          const cut = offset - consumed;
-          const original = node.nodeValue;
+          const cut = offset - consumed, original = node.nodeValue;
           node.nodeValue = original.slice(0, cut);
           if (bNode) bNode.nodeValue = original.slice(cut);
-        } else if (bNode) {
-          bNode.nodeValue = '';
-        }
+        } else if (bNode) node.nodeValue = '';
         consumed += len;
       });
       return [a, b];
     };
-
-    let low = 1;
-    let high = textLength - 1;
-    let best = 0;
+    let low = 1, high = textLength - 1, best = 0;
     while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      const [a, b] = makeSplit(mid);
+      const mid = Math.floor((low + high) / 2), [a, b] = makeSplit(mid);
       page.replaceChild(a, block);
       nextPage.insertBefore(b, nextPage.firstChild);
-      pageStyle(page);
-      pageStyle(nextPage);
+      pageStyle(page); pageStyle(nextPage);
       const fits = page.scrollHeight <= page.clientHeight + 1;
-      nextPage.removeChild(b);
-      page.replaceChild(block, a);
-      if (fits) {
-        best = mid;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
+      nextPage.removeChild(b); page.replaceChild(block, a);
+      if (fits) { best = mid; low = mid + 1; } else high = mid - 1;
     }
     if (!best) return false;
     const [a, b] = makeSplit(best);
-    page.replaceChild(a, block);
-    nextPage.insertBefore(b, nextPage.firstChild);
+    page.replaceChild(a, block); nextPage.insertBefore(b, nextPage.firstChild);
     return true;
   }
 
@@ -180,20 +155,12 @@
       const children = Array.from(page.childNodes);
       if (!children.length) break;
       const last = children[children.length - 1];
-
       if (last.nodeType === Node.TEXT_NODE) {
-        const value = last.nodeValue;
-        if (!value.trim()) { last.remove(); continue; }
-        const p = document.createElement('p');
-        p.appendChild(last);
-        page.appendChild(p);
-        continue;
+        if (!last.nodeValue.trim()) { last.remove(); continue; }
+        break;
       }
-
       if (last.classList?.contains('authorization-page-break')) break;
-
       if (children.length === 1 && splitElement(last, page, nextPage)) continue;
-
       page.removeChild(last);
       nextPage.insertBefore(last, nextPage.firstChild);
     }
@@ -206,23 +173,20 @@
     try {
       const saved = selectionOffsets(editor);
       const logicalNodes = extractLogicalNodes(editor);
-
       setEditorShell(editor);
       editor.innerHTML = '';
-
       let current = makePage();
       editor.appendChild(current);
       let forceBreak = false;
 
-      logicalNodes.forEach((originalNode) => {
-        if (originalNode.nodeType === Node.TEXT_NODE && !originalNode.nodeValue.trim()) return;
-
+      for (const originalNode of logicalNodes) {
+        if (originalNode.nodeType === Node.TEXT_NODE && !originalNode.nodeValue.trim()) continue;
         const node = originalNode;
+
         if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('authorization-page-break')) {
-          pageStyle(current);
           current.appendChild(node);
           forceBreak = true;
-          return;
+          continue;
         }
 
         if (forceBreak) {
@@ -233,43 +197,38 @@
 
         current.appendChild(node);
         pageStyle(current);
+        if (current.scrollHeight <= current.clientHeight + 1) continue;
 
-        if (current.scrollHeight > current.clientHeight + 1) {
-          current.removeChild(node);
-          const next = makePage();
-          editor.appendChild(next);
+        current.removeChild(node);
+        const next = makePage();
+        editor.appendChild(next);
 
-          if (!(node.nodeType === Node.ELEMENT_NODE && node.matches('table,img,hr')) && current.childNodes.length === 0 && splitElement(node, current, next)) {
-            current = next;
-          } else if (!(node.nodeType === Node.ELEMENT_NODE && node.matches('table,img,hr')) && splitElement(node, current, next)) {
-            current = next;
-          } else {
-            next.appendChild(node);
-            current = next;
-          }
-        }
-
-        if (current.scrollHeight > current.clientHeight + 1) {
-          const next = makePage();
-          editor.appendChild(next);
-          fitPage(current, next);
+        current.appendChild(node);
+        if (!(node.nodeType === Node.ELEMENT_NODE && node.matches('table,img,hr')) && splitElement(node, current, next)) {
           current = next;
-          if (!current.childNodes.length) {
-            current.remove();
-            current = editor.lastElementChild;
-          }
+          continue;
         }
-      });
 
-      const pages = getPages();
+        current.removeChild(node);
+        next.appendChild(node);
+        current = next;
+        if (current.scrollHeight > current.clientHeight + 1) {
+          const following = makePage();
+          editor.appendChild(following);
+          fitPage(current, following);
+          current = following;
+        }
+      }
+
+      let pages = getPages();
       while (pages.length > 1) {
         const last = pages[pages.length - 1];
         if (last.childNodes.length && !Array.from(last.childNodes).every(isEmptyNode)) break;
         last.remove();
         pages.pop();
       }
-      if (!pages.length) editor.appendChild(makePage());
-      getPages().forEach((page, index) => {
+      if (!pages.length) { pages = [makePage()]; editor.appendChild(pages[0]); }
+      pages.forEach((page, index) => {
         page.dataset.pageNumber = String(index + 1);
         pageStyle(page);
       });
@@ -287,11 +246,8 @@
   }
 
   function logicalHtml() {
-    const editor = getEditor();
-    if (!editor) return '';
     const pages = getPages();
-    if (!pages.length) return editor.innerHTML;
-    return pages.map((page) => page.innerHTML).join('');
+    return pages.length ? pages.map((page) => page.innerHTML).join('') : (getEditor()?.innerHTML || '');
   }
 
   function installSaveOverride() {
@@ -302,9 +258,7 @@
         if (!editor) return originalSave.apply(this, arguments);
         const html = logicalHtml();
         window.__tubolAuthorizationLogicalHtml = html;
-        try {
-          if (typeof state !== 'undefined') state.letterHtml = html;
-        } catch (_) {}
+        try { if (typeof state !== 'undefined') state.letterHtml = html; } catch (_) {}
         localStorage.setItem('pdfWorkspaceLetter', html);
         if (typeof window.updateWordCount === 'function') window.updateWordCount();
       };
@@ -315,10 +269,11 @@
   }
 
   function installTemplateSaveGuard() {
+    if (document.documentElement.dataset.authorizationTemplateSaveGuard === '1') return;
+    document.documentElement.dataset.authorizationTemplateSaveGuard = '1';
     document.addEventListener('click', (event) => {
       const button = event.target.closest?.('#saveTemplateConfirmBtn');
-      if (!button || button.dataset.authorizationHandled === '1') return;
-      button.dataset.authorizationHandled = '1';
+      if (!button) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       try {
@@ -388,9 +343,7 @@
           pagebreak: { mode: ['css', 'legacy'] },
           jsPDF: { unit: 'pt', format: SPEC.pdf, orientation: 'portrait' },
         }).from(wrapper).outputPdf('blob');
-      } finally {
-        root.remove();
-      }
+      } finally { root.remove(); }
     };
     exportFn.__pagedOverride = true;
     exportFn.__original = original;
