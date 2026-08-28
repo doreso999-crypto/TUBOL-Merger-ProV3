@@ -1,5 +1,5 @@
 /* TUBOL PDF Workspace loader.
-   The M&O Authorization template + insertion workflow lives in authorization-ui.js.
+   M&O Authorization is isolated in authorization-mdo.js/css.
    The visible Authorization Letter editor remains disabled. */
 
 document.write(`
@@ -13,9 +13,10 @@ document.write(`
   <link rel="stylesheet" href="modal-consistency.css">
   <link rel="stylesheet" href="preview-theme.css">
   <link rel="stylesheet" href="full-content-workspace.css">
+  <link rel="stylesheet" href="authorization-mdo.css">
   <script src="functions-core.js"><\/script>
   <script src="pdf-render-fix.js"><\/script>
   <script src="thumbnail-size-ui.js"><\/script>
   <script src="workspace-ui-fixes.js"><\/script>
-  <script src="authorization-ui.js"><\/script>
+  <script src="authorization-mdo.js"><\/script>
 `);
