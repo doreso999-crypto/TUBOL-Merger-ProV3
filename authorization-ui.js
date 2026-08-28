@@ -1,6 +1,6 @@
 /* Authorization Letter workspace UI.
-   Keeps the existing editor/template engine but makes its purpose explicit.
-   Adds an M&O shortcut to open the existing authorization template modal. */
+   Keeps the existing editor/template engine while making the M&O authorization
+   action a direct packet insertion workflow. */
 (() => {
   function setupAuthorizationUI() {
     const mergeView = document.getElementById('mergeView');
@@ -55,13 +55,14 @@
       button.type = 'button';
       button.className = 'btn btn-secondary';
       button.id = 'openAuthorizationFromMergeBtn';
-      button.title = 'Open Authorization Letter template';
+      button.title = 'Add Authorization to Packet';
       button.textContent = '＋ Authorization';
       const compress = document.getElementById('compressPacketBtn');
       mergeActions.insertBefore(button, compress || mergeActions.lastElementChild);
 
       button.addEventListener('click', () => {
-        window.authorizationTemplateReturnToLetter = true;
+        window.authorizationTemplateReturnToLetter = false;
+        window.authorizationAddDirectlyToPacket = true;
         if (typeof window.openLetterTemplateModal === 'function') {
           window.openLetterTemplateModal();
         }
@@ -69,24 +70,27 @@
     }
 
     const templateApply = document.getElementById('letterTemplateApplyBtn');
-    if (templateApply && !templateApply.dataset.authorizationReturnHook) {
-      templateApply.dataset.authorizationReturnHook = 'true';
-      templateApply.addEventListener('click', () => {
-        if (!window.authorizationTemplateReturnToLetter) return;
-        window.authorizationTemplateReturnToLetter = false;
-        setTimeout(() => document.querySelector('[data-view="letterView"]')?.click(), 0);
+    if (templateApply && !templateApply.dataset.authorizationPacketHook) {
+      templateApply.dataset.authorizationPacketHook = 'true';
+      templateApply.addEventListener('click', async () => {
+        if (!window.authorizationAddDirectlyToPacket) return;
+        window.authorizationAddDirectlyToPacket = false;
+
+        // The core template handler runs first and populates/saves the editor.
+        // Reuse the existing PDF creation/insertion pipeline, but remain in M&O.
+        setTimeout(async () => {
+          try {
+            if (typeof window.insertLetterIntoPacket !== 'function') {
+              throw new Error('Authorization packet insertion is unavailable.');
+            }
+            await window.insertLetterIntoPacket();
+          } catch (err) {
+            console.error('Direct authorization packet insertion failed', err);
+            if (typeof window.toast === 'function') window.toast('Could not add authorization to packet', 'error');
+          }
+        }, 0);
       });
     }
-
-    const templateCancel = document.getElementById('letterTemplateCancelBtn');
-    if (templateCancel && !templateCancel.dataset.authorizationReturnHook) {
-      templateCancel.dataset.authorizationReturnHook = 'true';
-      templateCancel.addEventListener('click', () => { window.authorizationTemplateReturnToLetter = false; });
-    }
-
-    document.getElementById('letterTemplateCloseBtn')?.addEventListener('click', () => {
-      window.authorizationTemplateReturnToLetter = false;
-    });
   }
 
   if (document.readyState === 'loading') {
