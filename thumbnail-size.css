@@ -1,4 +1,4 @@
-/* Fixed M&O thumbnail sizing. The workspace stays responsive; thumbnail cards remain fixed-size. */
+/* Fixed M&O thumbnail sizing + smooth control transitions. */
 #mergeView .page-grid {
   --thumbnail-width: 200px;
   display: grid;
@@ -10,6 +10,7 @@
   min-width: 0;
   overflow-x: auto;
   padding-bottom: 6px;
+  transition: gap 220ms ease, padding 220ms ease;
 }
 
 #mergeView .page-grid .page-card {
@@ -18,6 +19,7 @@
   min-width: var(--thumbnail-width) !important;
   max-width: var(--thumbnail-width) !important;
   overflow: hidden;
+  transition: width 240ms ease, min-width 240ms ease, max-width 240ms ease, transform 180ms ease, box-shadow 180ms ease;
 }
 
 #mergeView .page-grid .page-thumb {
@@ -32,6 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: width 240ms ease, height 240ms ease, box-shadow 180ms ease;
 }
 
 #mergeView .page-grid .page-thumb canvas {
@@ -42,6 +45,7 @@
   max-height: 100% !important;
   object-fit: contain;
   flex: 0 0 auto;
+  transition: opacity 220ms ease, transform 240ms ease;
 }
 
 .thumbnail-size-wrap {
@@ -52,6 +56,12 @@
 
 .thumbnail-size-btn {
   white-space: nowrap;
+  min-width: 58px;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 140ms ease;
+}
+
+.thumbnail-size-btn:active {
+  transform: scale(.97);
 }
 
 .thumbnail-size-menu {
@@ -59,18 +69,28 @@
   bottom: calc(100% + 6px);
   right: 0;
   z-index: 70;
-  display: none;
+  display: grid;
+  gap: 2px;
   min-width: 160px;
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface);
   box-shadow: 0 14px 30px rgba(0,0,0,.14);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(6px) scale(.98);
+  transform-origin: bottom right;
+  transition: opacity 170ms ease, transform 190ms ease, visibility 0s linear 190ms;
 }
 
 .thumbnail-size-menu.open {
-  display: grid;
-  gap: 2px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition: opacity 170ms ease, transform 190ms ease;
 }
 
 .thumbnail-size-menu button {
@@ -82,6 +102,7 @@
   padding: 9px 10px;
   text-align: left;
   cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, transform 120ms ease;
 }
 
 .thumbnail-size-menu button:hover,
@@ -90,10 +111,27 @@
   outline: none;
 }
 
+.thumbnail-size-menu button:active {
+  transform: translateX(2px);
+}
+
+/* Keep thumbnail sizing stable on narrow displays. */
 @media (max-width: 700px) {
   #mergeView .page-grid {
     grid-template-columns: repeat(auto-fill, var(--thumbnail-width)) !important;
     justify-content: start;
     gap: 10px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mergeView .page-grid,
+  #mergeView .page-grid .page-card,
+  #mergeView .page-grid .page-thumb,
+  #mergeView .page-grid .page-thumb canvas,
+  .thumbnail-size-btn,
+  .thumbnail-size-menu,
+  .thumbnail-size-menu button {
+    transition: none !important;
   }
 }
