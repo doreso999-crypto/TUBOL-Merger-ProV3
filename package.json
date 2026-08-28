@@ -7,6 +7,8 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
+    "workspace": "electron onlyoffice-main.js",
+    "start:workspace": "docker compose -f docker-compose.onlyoffice.yml up -d && electron onlyoffice-main.js",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win --publish never",
     "dist:mac": "electron-builder --mac --publish never",
@@ -21,56 +23,34 @@
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.54"
   },
-"build": {
-  "appId": "com.tubol.merger.pro",
-  "productName": "TUBOL Merger Pro",
-  "files": [
-    "index.html",
-    "design.css",
-    "functions.js",
-    "main.js",
-    "preload.js",
-    "vendor/**/*",
-    "assets/**/*",
-    "package.json"
-  ],
-  "asar": true,
-  "directories": {
-    "output": "dist",
-    "buildResources": "assets"
-  },
-  "win": {
-    "target": [
-      {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      },
-      {
-        "target": "portable",
-        "arch": [
-          "x64"
-        ]
-      }
-     ],
-      "artifactName": "PDF-Workspace-${version}-Windows-${arch}.${ext}",
-      "icon": "assets/POOP.PNG"
+  "build": {
+    "appId": "com.tubol.merger.pro",
+    "productName": "TUBOL Merger Pro",
+    "files": [
+      "index.html",
+      "design.css",
+      "functions.js",
+      "main.js",
+      "preload.js",
+      "onlyoffice-main.js",
+      "onlyoffice-workspace/**/*",
+      "docker-compose.onlyoffice.yml",
+      "assets/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "directories": {"output":"dist","buildResources":"assets"},
+    "win": {
+      "target":[{"target":"nsis","arch":["x64"]},{"target":"portable","arch":["x64"]}],
+      "artifactName":"PDF-Workspace-${version}-Windows-${arch}.${ext}",
+      "icon":"assets/POOP.PNG"
     },
     "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "category": "public.app-category.productivity",
-      "artifactName": "PDF-Workspace-${version}-macOS-${arch}.${ext}",
-      "icon": "assets/POOP.PNG"
+      "target":["dmg","zip"],
+      "category":"public.app-category.productivity",
+      "artifactName":"PDF-Workspace-${version}-macOS-${arch}.${ext}",
+      "icon":"assets/POOP.PNG"
     },
-    "linux": {
-      "icon": "assets/POOP.PNG",
-      "target": [
-        "AppImage"
-      ]
+    "linux": {"icon":"assets/POOP.PNG","target":["AppImage"]}
   }
-}
 }

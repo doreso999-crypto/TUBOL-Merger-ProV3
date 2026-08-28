@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TUBOL Document Workspace</title>
+<link rel="stylesheet" href="/static/workspace.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="mark">T</div><div><strong>TUBOL</strong><span>Document Workspace</span></div></div>
+  <div class="top-actions"><button id="newDoc">New Document</button><label class="button secondary">Open File<input id="upload" type="file" hidden accept=".docx,.xlsx,.pptx,.pdf,.txt"></label></div>
+</header>
+<div class="app">
+  <aside class="sidebar">
+    <button class="nav active" data-page="documents">Documents</button>
+    <button class="nav" data-page="editor">Document Editor</button>
+    <button class="nav" data-page="pdf">PDF Workspace</button>
+    <div class="sidebar-spacer"></div>
+    <small>Local-first workspace</small>
+  </aside>
+  <main>
+    <section id="documents" class="page active">
+      <div class="hero"><div><small>WORKSPACE</small><h1>Your documents</h1><p>Create, edit and export documents with ONLYOFFICE. PDF packets are assembled locally with the TUBOL tools.</p></div></div>
+      <div id="library" class="library"></div>
+    </section>
+
+    <section id="editor" class="page">
+      <div class="editor-head"><div><small>ONLYOFFICE</small><h1 id="editorTitle">Document Editor</h1></div><button id="closeEditor" class="secondary">Back to documents</button></div>
+      <div id="onlyoffice" class="onlyoffice"></div>
+    </section>
+
+    <section id="pdf" class="page">
+      <div class="hero pdf-hero">
+        <div><small>TUBOL PDF WORKSPACE</small><h1>Merge &amp; Organize</h1><p>Work with individual pages, not just whole files. Reorder, rotate, duplicate, delete, preview and export a polished packet.</p></div>
+        <div class="actions"><label class="button">＋ Add PDFs<input id="pdfInput" type="file" hidden accept="application/pdf" multiple></label><button id="mergePdf">Merge &amp; Download</button><button id="compressPdf" class="secondary">Optimize PDF</button><button id="clearPdf" class="secondary">Clear</button></div>
+      </div>
+      <div class="pdf-toolbar"><strong id="selectionSummary">0 pages</strong><span id="pdfHint">Select pages to rotate, duplicate or delete.</span><div class="toolbar-actions"><button id="rotateLeft">↶ Rotate</button><button id="duplicatePage">⧉ Duplicate</button><button id="deletePage" class="danger">Delete</button><button id="previewPdf">Preview</button></div></div>
+      <div id="pdfBoard" class="page-board empty"><div class="empty-card"><strong>Your page board is empty</strong><span>Add one or more PDFs to begin.</span></div></div>
+    </section>
+  </main>
+</div>
+<div id="previewModal" class="preview-modal" aria-hidden="true"><div class="preview-shell"><header><div><strong id="previewTitle">PDF Preview</strong><span id="previewMeta">All pages</span></div><button id="closePreview" class="secondary">Close</button></header><div id="previewPages" class="preview-pages"></div></div></div>
+<div id="toast" class="toast"></div>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+<script src="/static/workspace.js"></script>
+</body>
+</html>
