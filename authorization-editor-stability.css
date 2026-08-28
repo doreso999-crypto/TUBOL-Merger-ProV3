@@ -79,9 +79,11 @@
   pointer-events: none;
 }
 
+/* Page-break markers are logical editor metadata, not printable content. */
 #letterView #letterEditor.authorization-document-pages .authorization-page-break {
-  page-break-before: always;
-  break-before: page;
+  display: none !important;
+  page-break-before: auto !important;
+  break-before: auto !important;
 }
 
 #letterView #letterEditor.authorization-document-pages .authorization-page img,
