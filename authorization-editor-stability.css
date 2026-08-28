@@ -1,4 +1,4 @@
-/* Authorization Letter editor stability + physical page layout. */
+/* Authorization Letter editor stability + fixed Legal physical pages. */
 
 #letterView {
   position: relative;
@@ -22,7 +22,12 @@
   position: absolute;
 }
 
-/* The editor is now a document stack. Individual sheets are fixed-size pages. */
+/* Paper-size and margin controls are intentionally disabled for now. */
+#letterView #editorSettingsBar {
+  display: none !important;
+}
+
+/* The root is a document stack; individual sheets are fixed Legal-size pages. */
 #letterView #letterEditor.authorization-document-pages {
   width: 816px !important;
   min-width: 816px !important;
@@ -49,14 +54,15 @@
   display: block !important;
   flex: 0 0 auto !important;
   width: 816px !important;
-  height: 1056px !important;
+  height: 1344px !important;
   min-width: 816px !important;
-  min-height: 1056px !important;
+  min-height: 1344px !important;
   max-width: 816px !important;
-  max-height: 1056px !important;
+  max-height: 1344px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   margin: 0 !important;
+  padding: 96px !important;
   background: #fff !important;
   border: 1px solid #000 !important;
   border-radius: 0 !important;
@@ -73,6 +79,16 @@
   pointer-events: none;
 }
 
+#letterView #letterEditor.authorization-document-pages .authorization-page-break {
+  page-break-before: always;
+  break-before: page;
+}
+
+#letterView #letterEditor.authorization-document-pages .authorization-page img,
+#letterView #letterEditor.authorization-document-pages .authorization-page table {
+  max-width: 100% !important;
+}
+
 @media (max-width: 900px) {
   #letterView .letter-page-wrap {
     overflow-x: auto !important;
@@ -83,10 +99,4 @@
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-}
-
-/* Keep legacy single-page selectors from making the document grow. */
-#letterView #letterEditor.authorization-document-pages .authorization-page,
-#letterView #letterEditor.authorization-document-pages .authorization-page * {
-  max-width: 100% !important;
 }
