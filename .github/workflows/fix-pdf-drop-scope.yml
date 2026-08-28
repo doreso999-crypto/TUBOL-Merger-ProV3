@@ -6,93 +6,28 @@ permissions:
   contents: write
 jobs:
   fix:
-    if: github.event.head_commit.message != 'Scope PDF drop to M&O only'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Restrict global PDF drop to M&O
-        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Restrict PDF drop to M&O
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
 from pathlib import Path
 p = Path('functions.js')
 s = p.read_text(encoding='utf-8')
-old = '''function setupGlobalPdfDrop() {
-  const overlay = $('#globalDropOverlay');
-  if (!overlay) return;
-  let dragDepth = 0;
-  const hasFiles = e => Array.from(e.dataTransfer?.types || []).includes('Files');
-  const show = () => { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); };
-  const hide = () => { dragDepth = 0; overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); };
-  document.addEventListener('dragenter', e => {
-    if (!hasFiles(e)) return;
-    dragDepth++;
-    show();
-  });
-  document.addEventListener('dragover', e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-    show();
-  });
-  document.addEventListener('dragleave', e => {
-    if (!hasFiles(e)) return;
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (!dragDepth) hide();
-  });
-  document.addEventListener('drop', async e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    hide();
-    await addPdfFiles(e.dataTransfer.files);
-  });
-  window.addEventListener('blur', hide);
-}'''
-new = '''function setupGlobalPdfDrop() {
-  const overlay = $('#globalDropOverlay');
-  const mergeView = $('#mergeView');
-  if (!overlay || !mergeView) return;
-  let dragDepth = 0;
-  const hasFiles = e => Array.from(e.dataTransfer?.types || []).includes('Files');
-  const isMergeViewActive = () => mergeView.classList.contains('active-view');
-  const show = () => { overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); };
-  const hide = () => { dragDepth = 0; overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); };
-  document.addEventListener('dragenter', e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    if (!isMergeViewActive()) return hide();
-    dragDepth++;
-    show();
-  });
-  document.addEventListener('dragover', e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-    if (!isMergeViewActive()) return hide();
-    show();
-  });
-  document.addEventListener('dragleave', e => {
-    if (!hasFiles(e)) return;
-    if (!isMergeViewActive()) return hide();
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (!dragDepth) hide();
-  });
-  document.addEventListener('drop', async e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    const shouldAdd = isMergeViewActive();
-    hide();
-    if (shouldAdd) await addPdfFiles(e.dataTransfer.files);
-  });
-  window.addEventListener('blur', hide);
-}'''
-if old not in s:
-    raise SystemExit('Expected setupGlobalPdfDrop block was not found')
-p.write_text(s.replace(old, new), encoding='utf-8')
+start = s.index('function setupGlobalPdfDrop()')
+end = s.index('\n}\n\nfunction setupEditor()', start) + 2
+block = s[start:end]
+needle = "    if (!hasFiles(e)) return;"
+replacement = needle + "\n    if (!$('#mergeView')?.classList.contains('active-view')) return;"
+block = block.replace(needle, replacement)
+s = s[:start] + block + s[end:]
+p.write_text(s, encoding='utf-8')
 PY
-          git rm .github/workflows/fix-pdf-drop-scope.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add functions.js
+          git rm .github/workflows/fix-pdf-drop-scope.yml
           git commit -m 'Scope PDF drop to M&O only'
           git push
