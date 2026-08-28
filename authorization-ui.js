@@ -7,6 +7,8 @@
     const letterView = document.getElementById('letterView');
     const mergeActions = mergeView?.querySelector('.header-actions');
     const letterNav = document.querySelector('[data-view="letterView"]');
+    const templateApply = document.getElementById('letterTemplateApplyBtn');
+    const useTemplate = document.getElementById('openLetterTemplateBtn');
 
     if (letterNav) {
       letterNav.title = 'Authorization Letter';
@@ -28,7 +30,6 @@
         header.appendChild(p);
       }
 
-      const useTemplate = document.getElementById('openLetterTemplateBtn');
       const saveTemplate = document.getElementById('saveLetterTemplateBtn');
       const insertLetter = document.getElementById('insertLetterBtn');
       const downloadLetter = document.getElementById('downloadLetterBtn');
@@ -63,13 +64,22 @@
       button.addEventListener('click', () => {
         window.authorizationTemplateReturnToLetter = false;
         window.authorizationAddDirectlyToPacket = true;
+        if (templateApply) templateApply.textContent = 'Add Authorization to Packet';
         if (typeof window.openLetterTemplateModal === 'function') {
           window.openLetterTemplateModal();
         }
       });
     }
 
-    const templateApply = document.getElementById('letterTemplateApplyBtn');
+    if (useTemplate && !useTemplate.dataset.authorizationLabelHook) {
+      useTemplate.dataset.authorizationLabelHook = 'true';
+      useTemplate.addEventListener('click', () => {
+        if (templateApply && !window.authorizationAddDirectlyToPacket) {
+          templateApply.textContent = 'Populate Letter';
+        }
+      });
+    }
+
     if (templateApply && !templateApply.dataset.authorizationPacketHook) {
       templateApply.dataset.authorizationPacketHook = 'true';
       templateApply.addEventListener('click', async () => {
@@ -89,6 +99,24 @@
             if (typeof window.toast === 'function') window.toast('Could not add authorization to packet', 'error');
           }
         }, 0);
+      });
+    }
+
+    const templateCancel = document.getElementById('letterTemplateCancelBtn');
+    if (templateCancel && !templateCancel.dataset.authorizationLabelResetHook) {
+      templateCancel.dataset.authorizationLabelResetHook = 'true';
+      templateCancel.addEventListener('click', () => {
+        window.authorizationAddDirectlyToPacket = false;
+        if (templateApply) templateApply.textContent = 'Populate Letter';
+      });
+    }
+
+    const templateClose = document.getElementById('letterTemplateCloseBtn');
+    if (templateClose && !templateClose.dataset.authorizationLabelResetHook) {
+      templateClose.dataset.authorizationLabelResetHook = 'true';
+      templateClose.addEventListener('click', () => {
+        window.authorizationAddDirectlyToPacket = false;
+        if (templateApply) templateApply.textContent = 'Populate Letter';
       });
     }
   }
