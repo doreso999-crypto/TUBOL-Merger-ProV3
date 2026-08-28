@@ -9,14 +9,34 @@ document.write(`
     [data-view="letterView"] {
       display: none !important;
     }
+
+    /* Keep the logo visible, but make it purely decorative. */
+    #brandSidebarToggle {
+      cursor: default !important;
+      pointer-events: none !important;
+    }
+
+    /* The sidebar is removed from the rendered layout; the logo is independent. */
+    .sidebar,
+    #brandSidebarToggle + .sidebar {
+      display: none !important;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .workspace {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+
     #thumbnailSizeWrap,
     #thumbnailSizeBtn,
     #thumbnailSizeMenu {
       display: none !important;
-    }
-    #brandSidebarToggle {
-      cursor: default !important;
-      pointer-events: none !important;
     }
   </style>
   <link rel="stylesheet" href="responsive-sidebar-hidden.css">
