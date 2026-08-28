@@ -1,0 +1,47 @@
+/* Authorization Letter editor stability fixes. */
+
+/* Keep the Actions menu above the workspace/sidebar stacking layers. */
+#letterView {
+  position: relative;
+  z-index: 50;
+  overflow: visible !important;
+}
+
+#letterView .authorization-doc-toolbar {
+  position: relative;
+  z-index: 100;
+  overflow: visible !important;
+}
+
+#letterView .authorization-action-menu {
+  position: relative;
+  z-index: 1000;
+}
+
+#letterView .authorization-action-panel {
+  z-index: 10000 !important;
+  position: absolute;
+}
+
+/* Keep a Letter document physically fixed instead of allowing contenteditable to grow it. */
+#letterView #letterEditor {
+  width: 816px !important;
+  min-width: 816px !important;
+  height: 1056px !important;
+  min-height: 1056px !important;
+  max-height: 1056px !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  flex: 0 0 1056px !important;
+}
+
+@media (max-width: 900px) {
+  #letterView #letterEditor {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 816px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
