@@ -205,6 +205,33 @@
   white-space: nowrap;
 }
 
+/* Make the entire Authorization workspace consume the available height. */
+#letterView {
+  height: 100%;
+  min-height: 0;
+}
+
+#letterView.authorization-full-height,
+#letterView.active-view {
+  min-height: 0;
+}
+
+#letterView .authorization-editor-flat {
+  height: calc(100% - 8px);
+  min-height: 0;
+}
+
+#letterView .authorization-editor-flat-card {
+  height: 100%;
+  min-height: 0;
+}
+
+#letterView .authorization-page-wrap-flat {
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
 @media (max-width: 760px) {
   #letterView .authorization-doc-layout-popover {
     right: -6px;
