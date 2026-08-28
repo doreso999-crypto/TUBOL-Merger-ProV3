@@ -1,6 +1,6 @@
-/* Fixed M&O thumbnail sizing. The workspace stays responsive; thumbnail cards do not stretch. */
+/* Fixed M&O thumbnail sizing. The workspace stays responsive; thumbnail cards remain fixed-size. */
 #mergeView .page-grid {
-  --thumbnail-width: 210px;
+  --thumbnail-width: 200px;
   display: grid;
   grid-template-columns: repeat(auto-fill, var(--thumbnail-width)) !important;
   justify-content: start;
@@ -13,24 +13,35 @@
 }
 
 #mergeView .page-grid .page-card {
+  box-sizing: border-box;
   width: var(--thumbnail-width) !important;
   min-width: var(--thumbnail-width) !important;
   max-width: var(--thumbnail-width) !important;
+  overflow: hidden;
 }
 
 #mergeView .page-grid .page-thumb {
-  width: var(--thumbnail-width) !important;
-  min-width: var(--thumbnail-width) !important;
-  max-width: var(--thumbnail-width) !important;
-  aspect-ratio: 8.5 / 11;
+  box-sizing: border-box;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
   min-height: 0 !important;
+  aspect-ratio: 8.5 / 11;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #mergeView .page-grid .page-thumb canvas {
   display: block;
-  width: 100% !important;
+  width: auto !important;
   height: auto !important;
-  max-width: 100%;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .thumbnail-size-wrap {
@@ -45,11 +56,11 @@
 
 .thumbnail-size-menu {
   position: absolute;
-  top: calc(100% + 6px);
+  bottom: calc(100% + 6px);
   right: 0;
   z-index: 70;
   display: none;
-  min-width: 150px;
+  min-width: 160px;
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: 10px;
