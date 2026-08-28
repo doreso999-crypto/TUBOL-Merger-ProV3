@@ -1,4 +1,4 @@
-/* Authorization Letter document toolbar polish. */
+/* Authorization Letter editor polish layer. */
 
 #letterView #editorSettingsBar[hidden] { display: none !important; }
 
@@ -71,9 +71,91 @@
   min-width: 66px;
 }
 
+/* Flat document workspace: the page itself is the visual focus. */
+#letterView .authorization-editor-flat {
+  margin: 0;
+  width: 100%;
+}
+
+#letterView .authorization-editor-flat-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+#letterView .authorization-editor-flat-card .editor-footer {
+  background: transparent;
+  border-top: 0;
+}
+
+#letterView .authorization-action-menu {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+#letterView .authorization-action-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+#letterView .authorization-action-chevron {
+  font-size: 13px;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition: transform 160ms ease;
+}
+
+#letterView .authorization-action-menu.is-open .authorization-action-chevron {
+  transform: rotate(180deg) translateY(1px);
+}
+
+#letterView .authorization-action-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  min-width: 230px;
+  padding: 6px;
+  border: 1px solid var(--border, #d7dee7);
+  border-radius: 10px;
+  background: var(--panel, #fff);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
+}
+
+#letterView .authorization-action-panel[hidden] {
+  display: none !important;
+}
+
+#letterView .authorization-action-item {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+#letterView .authorization-action-item:hover {
+  background: var(--hover, #f3f4f6);
+}
+
 @media (max-width: 760px) {
   #letterView .authorization-doc-layout-popover {
     right: -6px;
     min-width: 250px;
+  }
+
+  #letterView .authorization-action-panel {
+    right: -6px;
+    min-width: 210px;
   }
 }
