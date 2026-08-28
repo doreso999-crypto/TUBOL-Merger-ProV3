@@ -105,15 +105,19 @@
       menu.appendChild(panel);
     }
 
-    // Keep Actions inside the document toolbar rather than the page header.
+    // Always place the single Actions menu inside the document tools.
+    // This also relocates the static menu that may already exist in the page header.
     if (menu.parentElement !== toolbar) {
       const spacer = toolbar.querySelector('.authorization-doc-toolbar-spacer');
-      if (spacer) toolbar.insertBefore(menu, spacer.nextSibling);
+      if (spacer) toolbar.insertBefore(menu, spacer);
       else toolbar.appendChild(menu);
     }
 
     const headerActions = letterView.querySelector('.view-header .header-actions');
-    if (headerActions) headerActions.removeAttribute('data-authorization-actions-collapsed');
+    if (headerActions) {
+      headerActions.querySelector('#authorizationActionMenu')?.remove();
+      headerActions.dataset.authorizationActionsCollapsed = '1';
+    }
   }
 
   function flattenEditorShell() {
