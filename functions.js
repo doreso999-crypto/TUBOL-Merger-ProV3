@@ -1,5 +1,6 @@
 /* TUBOL PDF Workspace loader.
    M&O Authorization is isolated in authorization-mdo.js/css.
+   Settings is isolated in settings.js/css.
    The visible Authorization Letter editor remains disabled.
    The logo remains visible and decorative; sidebar/thumbnail triggers are disabled. */
 
@@ -44,8 +45,10 @@ document.write(`
   <link rel="stylesheet" href="preview-theme.css">
   <link rel="stylesheet" href="full-content-workspace.css">
   <link rel="stylesheet" href="authorization-mdo.css">
+  <link rel="stylesheet" href="settings.css">
   <script src="functions-core.js"><\/script>
   <script src="pdf-render-fix.js"><\/script>
   <script src="workspace-ui-fixes.js"><\/script>
   <script src="authorization-mdo.js"><\/script>
+  <script src="settings.js"><\/script>
 `);
