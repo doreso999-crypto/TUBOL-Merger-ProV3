@@ -1,8 +1,0 @@
-/* Hide navigation sidebar without changing the page structure or application logic. */
-.sidebar {
-  display: none !important;
-}
-
-.workspace {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
