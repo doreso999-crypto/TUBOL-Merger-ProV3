@@ -21,39 +21,50 @@
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.54"
   },
-"build": {
-  "appId": "com.tubol.merger.pro",
-  "productName": "TUBOL Merger Pro",
-  "files": [
-    "index.html",
-    "design.css",
-    "functions.js",
-    "main.js",
-    "preload.js",
-    "vendor/**/*",
-    "assets/**/*",
-    "package.json"
-  ],
-  "asar": true,
-  "directories": {
-    "output": "dist",
-    "buildResources": "assets"
-  },
-  "win": {
-    "target": [
-      {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      },
-      {
-        "target": "portable",
-        "arch": [
-          "x64"
-        ]
-      }
-     ],
+  "build": {
+    "appId": "com.tubol.merger.pro",
+    "productName": "TUBOL Merger Pro",
+    "files": [
+      "index.html",
+      "design.css",
+      "functions.js",
+      "functions-core.js",
+      "main.js",
+      "preload.js",
+      "settings.js",
+      "settings.css",
+      "authorization-mdo.js",
+      "authorization-mdo.css",
+      "pdf-render-fix.js",
+      "workspace-ui-fixes.js",
+      "modal-consistency.css",
+      "preview-theme.css",
+      "full-content-workspace.css",
+      "responsive-sidebar-hidden.css",
+      "vendor/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "PDF-Workspace-${version}-Windows-${arch}.${ext}",
       "icon": "assets/POOP.PNG"
     },
@@ -71,6 +82,6 @@
       "target": [
         "AppImage"
       ]
+    }
   }
-}
 }
