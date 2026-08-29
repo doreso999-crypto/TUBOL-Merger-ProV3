@@ -1,25 +1,17 @@
 /* TUBOL PDF Workspace loader.
-   M&O Authorization is isolated in authorization-mdo.js/css.
-   Settings is isolated in settings.js/css.
-   The visible Authorization Letter editor remains disabled.
-   The logo remains visible and decorative; sidebar/thumbnail triggers are disabled. */
+   M&O is the live workspace. Authorization and Settings are isolated modules.
+   The retired Letter Editor is no longer part of the live startup path. */
 
 document.write(`
-  <style id="tubol-authorization-editor-disabled">
-    #letterView,
-    [data-view="letterView"] {
-      display: none !important;
-    }
-
-    /* Keep the logo visible, but make it purely decorative. */
+  <style id="tubol-live-layout-cleanup">
+    /* Keep the logo visible but remove its old sidebar trigger behavior. */
     #brandSidebarToggle {
       cursor: default !important;
       pointer-events: none !important;
     }
 
-    /* The sidebar is removed from the rendered layout; the logo is independent. */
-    .sidebar,
-    #brandSidebarToggle + .sidebar {
+    /* The sidebar/navigation is retired. */
+    .sidebar {
       display: none !important;
       width: 0 !important;
       min-width: 0 !important;
@@ -34,6 +26,7 @@ document.write(`
       grid-template-columns: minmax(0, 1fr) !important;
     }
 
+    /* Thumbnail sizing controls are retired; page thumbnails themselves remain. */
     #thumbnailSizeWrap,
     #thumbnailSizeBtn,
     #thumbnailSizeMenu {
@@ -46,7 +39,22 @@ document.write(`
   <link rel="stylesheet" href="full-content-workspace.css">
   <link rel="stylesheet" href="authorization-mdo.css">
   <link rel="stylesheet" href="settings.css">
+  <script>
+    // Prevent the retired functions-core initializer from wiring Letter Editor controls.
+    (() => {
+      const originalAddEventListener = document.addEventListener.bind(document);
+      document.addEventListener = function(type, listener, options) {
+        if (type === 'DOMContentLoaded' && typeof listener === 'function' && listener.name === 'init') return;
+        return originalAddEventListener(type, listener, options);
+      };
+    })();
+  <\/script>
   <script src="functions-core.js"><\/script>
+  <script>
+    // Restore the browser method immediately after the legacy core is loaded.
+    document.addEventListener = Document.prototype.addEventListener.bind(document);
+  <\/script>
+  <script src="mdo-runtime.js"><\/script>
   <script src="pdf-render-fix.js"><\/script>
   <script src="workspace-ui-fixes.js"><\/script>
   <script src="authorization-mdo.js"><\/script>
