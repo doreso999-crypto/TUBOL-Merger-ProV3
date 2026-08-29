@@ -29,6 +29,7 @@
       "design.css",
       "functions.js",
       "functions-core.js",
+      "mdo-runtime.js",
       "main.js",
       "preload.js",
       "settings.js",
@@ -54,34 +55,25 @@
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         },
         {
           "target": "portable",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
       "artifactName": "PDF-Workspace-${version}-Windows-${arch}.${ext}",
       "icon": "assets/POOP.PNG"
     },
     "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
+      "target": ["dmg", "zip"],
       "category": "public.app-category.productivity",
       "artifactName": "PDF-Workspace-${version}-macOS-${arch}.${ext}",
       "icon": "assets/POOP.PNG"
     },
     "linux": {
       "icon": "assets/POOP.PNG",
-      "target": [
-        "AppImage"
-      ]
+      "target": ["AppImage"]
     }
   }
 }
