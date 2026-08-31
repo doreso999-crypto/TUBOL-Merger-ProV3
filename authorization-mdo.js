@@ -23,12 +23,27 @@ I authorize this dispute.
 </div>`
   };
 
-  const esc = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+  const esc = value => String(value ?? '').replace(/[&<>'\"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
+
+  function isUsableTemplate(template) {
+    return !!template && (typeof template.html === 'string' && template.html.trim().length > 0 || typeof template.content === 'string' && template.content.trim().length > 0);
+  }
+
+  function normalizeTemplate(template) {
+    if (template?.id === DEFAULT_AUTH_TEMPLATE.id || !isUsableTemplate(template)) return DEFAULT_AUTH_TEMPLATE;
+    return template;
+  }
 
   function getTemplates() {
     try {
       const stored = JSON.parse(localStorage.getItem('pdfWorkspaceAuthTemplates') || 'null');
-      if (Array.isArray(stored) && stored.length) return stored.map(item => item?.id === 'authorization-default' ? DEFAULT_AUTH_TEMPLATE : item);
+      if (Array.isArray(stored) && stored.length) {
+        const normalized = stored.map(normalizeTemplate);
+        const hasDefault = normalized.some(item => item.id === DEFAULT_AUTH_TEMPLATE.id);
+        const result = hasDefault ? normalized : [DEFAULT_AUTH_TEMPLATE, ...normalized];
+        saveTemplates(result);
+        return result;
+      }
     } catch (error) {
       console.warn('Authorization template storage could not be read.', error);
     }
@@ -104,14 +119,15 @@ I authorize this dispute.
   function buildAuthorizationHtml() {
     const id = document.getElementById('letterTemplateSelect')?.value;
     const templates = getTemplates();
-    const template = templates.find(item => item.id === id) || templates[0];
-    if (!template) throw new Error('No authorization template is available.');
-
+    const selected = templates.find(item => item.id === id);
+    const template = selected?.id === DEFAULT_AUTH_TEMPLATE.id || !isUsableTemplate(selected) ? DEFAULT_AUTH_TEMPLATE : selected;
     const name = (document.getElementById('letterTemplateClientName')?.value || '').trim() || 'Your Name';
     const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || getEasternToday());
     const bureau = AUTH_BUREAUS[document.getElementById('letterTemplateBureau')?.value] || AUTH_BUREAUS.equifax;
     const bureauAddressHtml = bureau.address.split('\n').map(esc).join('<br>');
-    const templateHtml = template.html || `<div style="font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.35">${esc(template.content || '').replace(/\n/g, '<br>')}</div>`;
+    const templateHtml = isUsableTemplate(template) && typeof template.html === 'string'
+      ? template.html
+      : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.35">${esc(template.content || DEFAULT_AUTH_TEMPLATE.html).replace(/\n/g, '<br>')}</div>`;
 
     return templateHtml
       .replaceAll('{{CLIENT_NAME}}', esc(name))
