@@ -137,34 +137,45 @@ I authorize this dispute.
       .replaceAll('{{BUREAU_ADDRESS}}', bureauAddressHtml);
   }
 
-  function ensureRenderSurface() {
-    let surface = document.getElementById('authorizationRenderSurface');
-    if (!surface) {
-      surface = document.createElement('div');
-      surface.id = 'authorizationRenderSurface';
-      surface.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(surface);
-    }
-    Object.assign(surface.style, {
-      position:'fixed', left:'-100000px', top:'0', width:'816px', minHeight:'1056px',
-      boxSizing:'border-box', padding:'96px', background:'#fff', color:'#000',
-      pointerEvents:'none', opacity:'1', visibility:'visible', overflow:'visible'
+  function createPrintableHost(html) {
+    const host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '0',
+      top: '0',
+      width: '816px',
+      minHeight: '1056px',
+      boxSizing: 'border-box',
+      padding: '96px',
+      background: '#fff',
+      color: '#000',
+      pointerEvents: 'none',
+      opacity: '1',
+      visibility: 'visible',
+      overflow: 'visible',
+      zIndex: '2147483647'
     });
-    return surface;
+    host.innerHTML = html;
+    document.body.appendChild(host);
+    return host;
   }
 
   async function createAuthorizationPdfBlob() {
     if (typeof window.html2pdf !== 'function') throw new Error('Authorization PDF engine unavailable.');
-    const surface = ensureRenderSurface();
-    surface.innerHTML = buildAuthorizationHtml();
-    return window.html2pdf().set({
-      margin:0,
-      filename:'AUTHORIZATION.pdf',
-      image:{ type:'jpeg', quality:0.97 },
-      html2canvas:{ scale:2, backgroundColor:'#fff', useCORS:true },
-      jsPDF:{ unit:'pt', format:'letter', orientation:'portrait' },
-      pagebreak:{ mode:['css','legacy'] }
-    }).from(surface).outputPdf('blob');
+    const host = createPrintableHost(buildAuthorizationHtml());
+    try {
+      return await window.html2pdf().set({
+        margin:0,
+        filename:'AUTHORIZATION.pdf',
+        image:{ type:'jpeg', quality:0.97 },
+        html2canvas:{ scale:2, backgroundColor:'#fff', useCORS:true },
+        jsPDF:{ unit:'pt', format:'letter', orientation:'portrait' },
+        pagebreak:{ mode:['css','legacy'] }
+      }).from(host).outputPdf('blob');
+    } finally {
+      host.remove();
+    }
   }
 
   async function addAuthorizationToPacket() {
