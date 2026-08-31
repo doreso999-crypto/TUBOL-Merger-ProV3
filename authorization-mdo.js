@@ -15,7 +15,7 @@
 {{BUREAU_ADDRESS_HTML}}<br><br>
 This is <strong>{{CLIENT_NAME}}</strong> and I authorize this dispute.<br><br>
 Today is {{DATE}}.<br><br>
-I am mailing this through a mailing company as I can’t physically go into postal office due to health issues. This is my authorization for you to process this dispute.<br><br>
+I am mailing this through a mailing company as I can't physically go into postal office due to health issues. This is my authorization for you to process this dispute.<br><br>
 This is not a third party agency or anyone else authorizing this dispute.<br><br>
 Please do not deflect or not process my dispute for any such reason.<br>
 Again, this is <strong>{{CLIENT_NAME}}</strong><br><br>
@@ -137,45 +137,79 @@ I authorize this dispute.
       .replaceAll('{{BUREAU_ADDRESS}}', bureauAddressHtml);
   }
 
-  function createPrintableHost(html) {
-    const host = document.createElement('div');
-    host.setAttribute('aria-hidden', 'true');
-    Object.assign(host.style, {
-      position: 'fixed',
-      left: '0',
-      top: '0',
-      width: '816px',
-      minHeight: '1056px',
-      boxSizing: 'border-box',
-      padding: '96px',
-      background: '#fff',
-      color: '#000',
-      pointerEvents: 'none',
-      opacity: '1',
-      visibility: 'visible',
-      overflow: 'visible',
-      zIndex: '2147483647'
-    });
-    host.innerHTML = html;
-    document.body.appendChild(host);
-    return host;
+  function htmlToPlainText(html) {
+    const container = document.createElement('div');
+    container.innerHTML = String(html || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/p\s*>/gi, '\n').replace(/<\/div\s*>/gi, '\n');
+    return (container.textContent || '').replace(/\u00a0/g, ' ').replace(/\r/g, '').trim();
+  }
+
+  function normalizePdfText(text) {
+    return String(text || '')
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2013/g, '-')
+      .replace(/\u2014/g, '--')
+      .replace(/\u2026/g, '...');
+  }
+
+  function wrapPdfLine(text, font, fontSize, maxWidth) {
+    const words = normalizePdfText(text).split(/\s+/).filter(Boolean);
+    if (!words.length) return [''];
+    const lines = [];
+    let current = '';
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
+        current = candidate;
+        continue;
+      }
+      if (current) lines.push(current);
+      current = word;
+      if (font.widthOfTextAtSize(current, fontSize) > maxWidth) {
+        let chunk = '';
+        for (const ch of current) {
+          const next = chunk + ch;
+          if (font.widthOfTextAtSize(next, fontSize) <= maxWidth) chunk = next;
+          else { if (chunk) lines.push(chunk); chunk = ch; }
+        }
+        current = chunk;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
   }
 
   async function createAuthorizationPdfBlob() {
-    if (typeof window.html2pdf !== 'function') throw new Error('Authorization PDF engine unavailable.');
-    const host = createPrintableHost(buildAuthorizationHtml());
-    try {
-      return await window.html2pdf().set({
-        margin:0,
-        filename:'AUTHORIZATION.pdf',
-        image:{ type:'jpeg', quality:0.97 },
-        html2canvas:{ scale:2, backgroundColor:'#fff', useCORS:true },
-        jsPDF:{ unit:'pt', format:'letter', orientation:'portrait' },
-        pagebreak:{ mode:['css','legacy'] }
-      }).from(host).outputPdf('blob');
-    } finally {
-      host.remove();
+    if (!window.PDFLib?.PDFDocument) throw new Error('PDF engine unavailable.');
+    const pdf = await PDFLib.PDFDocument.create();
+    const font = await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+    const boldFont = await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    const pageWidth = 612;
+    const pageHeight = 792;
+    const margin = 72;
+    const fontSize = 15;
+    const lineHeight = 22;
+    const maxWidth = pageWidth - (margin * 2);
+    const pageText = htmlToPlainText(buildAuthorizationHtml());
+    const paragraphs = pageText.split(/\n+/);
+    let page = pdf.addPage([pageWidth, pageHeight]);
+    let y = pageHeight - margin;
+
+    for (const paragraph of paragraphs) {
+      const lines = wrapPdfLine(paragraph, font, fontSize, maxWidth);
+      for (const line of lines) {
+        if (y < margin + lineHeight) {
+          page = pdf.addPage([pageWidth, pageHeight]);
+          y = pageHeight - margin;
+        }
+        page.drawText(line, { x: margin, y, size: fontSize, font });
+        y -= lineHeight;
+      }
+      y -= lineHeight * 0.35;
     }
+
+    const bytes = await pdf.save({ useObjectStreams:true, addDefaultPage:false });
+    return new Blob([bytes], { type:'application/pdf' });
   }
 
   async function addAuthorizationToPacket() {
