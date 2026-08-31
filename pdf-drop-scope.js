@@ -1,52 +1,121 @@
-/* M&O-only PDF drag/drop guard. Loaded after functions.js so it can replace the global drop setup before DOMContentLoaded. */
-window.setupGlobalPdfDrop = function setupGlobalPdfDrop() {
-  const overlay = document.getElementById('globalDropOverlay');
-  const mergeView = document.getElementById('mergeView');
-  if (!overlay || !mergeView) return;
+/* M&O-only PDF drag/drop handling. */
+(() => {
+  function bindPdfDrop() {
+    if (window.__tubolPdfDropBound) return;
 
-  let dragDepth = 0;
-  const hasFiles = e => Array.from(e.dataTransfer?.types || []).includes('Files');
-  const isMAndOActive = () => mergeView.classList.contains('active-view');
-  const show = () => {
-    overlay.classList.add('show');
-    overlay.setAttribute('aria-hidden', 'false');
-  };
-  const hide = () => {
-    dragDepth = 0;
-    overlay.classList.remove('show');
-    overlay.setAttribute('aria-hidden', 'true');
-  };
+    const overlay = document.getElementById('globalDropOverlay');
+    const mergeView = document.getElementById('mergeView');
+    const dropZone = document.getElementById('dropZone');
+    const pdfInput = document.getElementById('pdfInput');
 
-  document.addEventListener('dragenter', e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    if (!isMAndOActive()) return hide();
-    dragDepth += 1;
-    show();
-  });
+    if (!overlay || !mergeView || typeof window.addPdfFiles !== 'function') return;
 
-  document.addEventListener('dragover', e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = isMAndOActive() ? 'copy' : 'none';
-    if (!isMAndOActive()) return hide();
-    show();
-  });
+    window.__tubolPdfDropBound = true;
 
-  document.addEventListener('dragleave', e => {
-    if (!hasFiles(e)) return;
-    if (!isMAndOActive()) return hide();
-    dragDepth = Math.max(0, dragDepth - 1);
-    if (!dragDepth) hide();
-  });
+    let dragDepth = 0;
+    const hasFiles = event => {
+      const types = Array.from(event.dataTransfer?.types || []);
+      return types.includes('Files') || Boolean(event.dataTransfer?.files?.length);
+    };
+    const isMAndOActive = () => mergeView.classList.contains('active-view');
+    const showOverlay = () => {
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden', 'false');
+    };
+    const hideOverlay = () => {
+      dragDepth = 0;
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden', 'true');
+      dropZone?.classList.remove('dragover');
+    };
+    const acceptDrop = async files => {
+      if (!files?.length || !isMAndOActive()) return;
+      await window.addPdfFiles(files);
+    };
 
-  document.addEventListener('drop', async e => {
-    if (!hasFiles(e)) return;
-    e.preventDefault();
-    const shouldAdd = isMAndOActive();
-    hide();
-    if (shouldAdd) await addPdfFiles(e.dataTransfer.files);
-  });
+    if (dropZone) {
+      dropZone.addEventListener('click', event => {
+        if (event.target.closest('button, input, select, a')) return;
+        pdfInput?.click();
+      });
 
-  window.addEventListener('blur', hide);
-};
+      dropZone.addEventListener('dragenter', event => {
+        if (!hasFiles(event) || !isMAndOActive()) return;
+        event.preventDefault();
+        event.stopPropagation();
+        dragDepth += 1;
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragover', event => {
+        if (!hasFiles(event) || !isMAndOActive()) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.dataTransfer.dropEffect = 'copy';
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', event => {
+        if (!hasFiles(event)) return;
+        event.preventDefault();
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (!dragDepth) dropZone.classList.remove('dragover');
+      });
+
+      dropZone.addEventListener('drop', async event => {
+        if (!hasFiles(event) || !isMAndOActive()) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const files = event.dataTransfer.files;
+        hideOverlay();
+        await acceptDrop(files);
+      });
+    }
+
+    document.addEventListener('dragenter', event => {
+      if (!hasFiles(event)) return;
+      if (!isMAndOActive()) {
+        hideOverlay();
+        return;
+      }
+      event.preventDefault();
+      dragDepth += 1;
+      showOverlay();
+    }, true);
+
+    document.addEventListener('dragover', event => {
+      if (!hasFiles(event)) return;
+      if (!isMAndOActive()) {
+        hideOverlay();
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      showOverlay();
+    }, true);
+
+    document.addEventListener('dragleave', event => {
+      if (!hasFiles(event)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (!dragDepth) hideOverlay();
+    }, true);
+
+    document.addEventListener('drop', async event => {
+      if (!hasFiles(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const files = event.dataTransfer.files;
+      const shouldAdd = isMAndOActive();
+      hideOverlay();
+      if (shouldAdd) await acceptDrop(files);
+    }, true);
+
+    window.addEventListener('blur', hideOverlay);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindPdfDrop, { once: true });
+  } else {
+    bindPdfDrop();
+  }
+})();
