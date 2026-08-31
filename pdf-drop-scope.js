@@ -13,6 +13,7 @@
     window.__tubolPdfDropBound = true;
 
     let dragDepth = 0;
+    const isDropZoneEvent = event => event.target instanceof Element && Boolean(event.target.closest('#dropZone'));
     const hasFiles = event => {
       const types = Array.from(event.dataTransfer?.types || []);
       return types.includes('Files') || Boolean(event.dataTransfer?.files?.length);
@@ -73,7 +74,7 @@
     }
 
     document.addEventListener('dragenter', event => {
-      if (!hasFiles(event)) return;
+      if (!hasFiles(event) || isDropZoneEvent(event)) return;
       if (!isMAndOActive()) {
         hideOverlay();
         return;
@@ -84,7 +85,7 @@
     }, true);
 
     document.addEventListener('dragover', event => {
-      if (!hasFiles(event)) return;
+      if (!hasFiles(event) || isDropZoneEvent(event)) return;
       if (!isMAndOActive()) {
         hideOverlay();
         return;
@@ -95,13 +96,13 @@
     }, true);
 
     document.addEventListener('dragleave', event => {
-      if (!hasFiles(event)) return;
+      if (!hasFiles(event) || isDropZoneEvent(event)) return;
       dragDepth = Math.max(0, dragDepth - 1);
       if (!dragDepth) hideOverlay();
     }, true);
 
     document.addEventListener('drop', async event => {
-      if (!hasFiles(event)) return;
+      if (!hasFiles(event) || isDropZoneEvent(event)) return;
       event.preventDefault();
       event.stopPropagation();
       const files = event.dataTransfer.files;
