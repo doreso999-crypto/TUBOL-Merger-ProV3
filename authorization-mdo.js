@@ -28,7 +28,9 @@ I authorize this dispute.
   function getTemplates() {
     try {
       const stored = JSON.parse(localStorage.getItem('pdfWorkspaceAuthTemplates') || 'null');
-      if (Array.isArray(stored) && stored.length) return stored.map(item => item?.id === 'authorization-default' ? DEFAULT_AUTH_TEMPLATE : item);
+      if (Array.isArray(stored) && stored.some(item => item && (item.id || item.name || item.html || item.content))) {
+        return stored.map(item => item?.id === 'authorization-default' ? DEFAULT_AUTH_TEMPLATE : item);
+      }
     } catch (error) {
       console.warn('Authorization template storage could not be read.', error);
     }
