@@ -143,16 +143,15 @@ I authorize this dispute.
       left: '-100000px',
       top: '0',
       width: '816px',
-      minHeight: '1056px',
       boxSizing: 'border-box',
       padding: '96px',
+      margin: '0',
       background: '#fff',
       color: '#000',
       pointerEvents: 'none',
       opacity: '1',
       visibility: 'visible',
-      overflow: 'visible',
-      zIndex: '2147483647'
+      overflow: 'visible'
     });
     host.innerHTML = html;
     document.body.appendChild(host);
@@ -167,9 +166,22 @@ I authorize this dispute.
         margin: 0,
         filename: 'AUTHORIZATION.pdf',
         image: { type: 'jpeg', quality: 0.97 },
-        html2canvas: { scale: 2, backgroundColor: '#fff', useCORS: true },
-        jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        html2canvas: {
+          scale: 2,
+          backgroundColor: '#fff',
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 816
+        },
+        jsPDF: {
+          unit: 'pt',
+          format: 'letter',
+          orientation: 'portrait'
+        },
+        pagebreak: {
+          mode: ['css', 'legacy']
+        }
       }).from(host).outputPdf('blob');
     } finally {
       host.remove();
@@ -181,7 +193,11 @@ I authorize this dispute.
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const pdf = await PDFLib.PDFDocument.load(bytes);
     const entries = Array.from({ length: pdf.getPageCount() }, (_, index) => ({
-      id: crypto.randomUUID(), pdfBytes: bytes, sourceIndex: index, fileName: 'AUTHORIZATION.pdf', rotation: 0
+      id: crypto.randomUUID(),
+      pdfBytes: bytes,
+      sourceIndex: index,
+      fileName: 'AUTHORIZATION.pdf',
+      rotation: 0
     }));
     const existing = state.pages.findIndex(page => page.fileName === 'AUTHORIZATION.pdf');
     state.pages.splice(existing >= 0 ? existing + 1 : state.pages.length, 0, ...entries);
