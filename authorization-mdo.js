@@ -1,4 +1,4 @@
-/* TUBOL — M&O Authorization only. No dependency on the retired Letter Editor. */
+/* TUBOL — M&O Authorization only. */
 (() => {
   'use strict';
 
@@ -26,7 +26,7 @@ I authorize this dispute.
   const esc = value => String(value ?? '').replace(/[&<>'\"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
 
   function isUsableTemplate(template) {
-    return !!template && (typeof template.html === 'string' && template.html.trim().length > 0 || typeof template.content === 'string' && template.content.trim().length > 0);
+    return !!template && ((typeof template.html === 'string' && template.html.trim().length > 0) || (typeof template.content === 'string' && template.content.trim().length > 0));
   }
 
   function normalizeTemplate(template) {
@@ -34,13 +34,16 @@ I authorize this dispute.
     return template;
   }
 
+  function saveTemplates(list) {
+    localStorage.setItem('pdfWorkspaceAuthTemplates', JSON.stringify(list));
+  }
+
   function getTemplates() {
     try {
       const stored = JSON.parse(localStorage.getItem('pdfWorkspaceAuthTemplates') || 'null');
       if (Array.isArray(stored) && stored.length) {
         const normalized = stored.map(normalizeTemplate);
-        const hasDefault = normalized.some(item => item.id === DEFAULT_AUTH_TEMPLATE.id);
-        const result = hasDefault ? normalized : [DEFAULT_AUTH_TEMPLATE, ...normalized];
+        const result = normalized.some(item => item.id === DEFAULT_AUTH_TEMPLATE.id) ? normalized : [DEFAULT_AUTH_TEMPLATE, ...normalized];
         saveTemplates(result);
         return result;
       }
@@ -50,10 +53,6 @@ I authorize this dispute.
     const seeded = [DEFAULT_AUTH_TEMPLATE];
     saveTemplates(seeded);
     return seeded;
-  }
-
-  function saveTemplates(list) {
-    localStorage.setItem('pdfWorkspaceAuthTemplates', JSON.stringify(list));
   }
 
   function getEasternToday() {
@@ -107,27 +106,26 @@ I authorize this dispute.
     if (!modal) return;
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
-    if (!document.getElementById('saveExportModal')?.classList.contains('open')) document.body.classList.remove('modal-open');
+    document.body.classList.remove('modal-open');
   }
 
   function updateTemplateDeleteState() {
     const button = document.getElementById('deleteSavedTemplateBtn');
     const id = document.getElementById('letterTemplateSelect')?.value;
-    if (button) button.disabled = !id || id === 'authorization-default';
+    if (button) button.disabled = !id || id === DEFAULT_AUTH_TEMPLATE.id;
   }
 
   function buildAuthorizationHtml() {
     const id = document.getElementById('letterTemplateSelect')?.value;
-    const templates = getTemplates();
-    const selected = templates.find(item => item.id === id);
-    const template = selected?.id === DEFAULT_AUTH_TEMPLATE.id || !isUsableTemplate(selected) ? DEFAULT_AUTH_TEMPLATE : selected;
+    const selected = getTemplates().find(item => item.id === id);
+    const template = normalizeTemplate(selected);
     const name = (document.getElementById('letterTemplateClientName')?.value || '').trim() || 'Your Name';
     const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || getEasternToday());
     const bureau = AUTH_BUREAUS[document.getElementById('letterTemplateBureau')?.value] || AUTH_BUREAUS.equifax;
     const bureauAddressHtml = bureau.address.split('\n').map(esc).join('<br>');
-    const templateHtml = isUsableTemplate(template) && typeof template.html === 'string'
+    const templateHtml = typeof template.html === 'string' && template.html.trim()
       ? template.html
-      : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.35">${esc(template.content || DEFAULT_AUTH_TEMPLATE.html).replace(/\n/g, '<br>')}</div>`;
+      : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1.5">${esc(template.content || '').replace(/\n/g, '<br>')}</div>`;
 
     return templateHtml
       .replaceAll('{{CLIENT_NAME}}', esc(name))
@@ -137,87 +135,53 @@ I authorize this dispute.
       .replaceAll('{{BUREAU_ADDRESS}}', bureauAddressHtml);
   }
 
-  function htmlToPlainText(html) {
-    const container = document.createElement('div');
-    container.innerHTML = String(html || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/p\s*>/gi, '\n').replace(/<\/div\s*>/gi, '\n');
-    return (container.textContent || '').replace(/\u00a0/g, ' ').replace(/\r/g, '').trim();
-  }
-
-  function normalizePdfText(text) {
-    return String(text || '')
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/\u2013/g, '-')
-      .replace(/\u2014/g, '--')
-      .replace(/\u2026/g, '...');
-  }
-
-  function wrapPdfLine(text, font, fontSize, maxWidth) {
-    const words = normalizePdfText(text).split(/\s+/).filter(Boolean);
-    if (!words.length) return [''];
-    const lines = [];
-    let current = '';
-    for (const word of words) {
-      const candidate = current ? `${current} ${word}` : word;
-      if (font.widthOfTextAtSize(candidate, fontSize) <= maxWidth) {
-        current = candidate;
-        continue;
-      }
-      if (current) lines.push(current);
-      current = word;
-      if (font.widthOfTextAtSize(current, fontSize) > maxWidth) {
-        let chunk = '';
-        for (const ch of current) {
-          const next = chunk + ch;
-          if (font.widthOfTextAtSize(next, fontSize) <= maxWidth) chunk = next;
-          else { if (chunk) lines.push(chunk); chunk = ch; }
-        }
-        current = chunk;
-      }
-    }
-    if (current) lines.push(current);
-    return lines;
+  function createPrintableHost(html) {
+    const host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    Object.assign(host.style, {
+      position: 'fixed',
+      left: '-100000px',
+      top: '0',
+      width: '816px',
+      minHeight: '1056px',
+      boxSizing: 'border-box',
+      padding: '96px',
+      background: '#fff',
+      color: '#000',
+      pointerEvents: 'none',
+      opacity: '1',
+      visibility: 'visible',
+      overflow: 'visible',
+      zIndex: '2147483647'
+    });
+    host.innerHTML = html;
+    document.body.appendChild(host);
+    return host;
   }
 
   async function createAuthorizationPdfBlob() {
-    if (!window.PDFLib?.PDFDocument) throw new Error('PDF engine unavailable.');
-    const pdf = await PDFLib.PDFDocument.create();
-    const font = await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
-    const boldFont = await pdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
-    const pageWidth = 612;
-    const pageHeight = 792;
-    const margin = 72;
-    const fontSize = 15;
-    const lineHeight = 22;
-    const maxWidth = pageWidth - (margin * 2);
-    const pageText = htmlToPlainText(buildAuthorizationHtml());
-    const paragraphs = pageText.split(/\n+/);
-    let page = pdf.addPage([pageWidth, pageHeight]);
-    let y = pageHeight - margin;
-
-    for (const paragraph of paragraphs) {
-      const lines = wrapPdfLine(paragraph, font, fontSize, maxWidth);
-      for (const line of lines) {
-        if (y < margin + lineHeight) {
-          page = pdf.addPage([pageWidth, pageHeight]);
-          y = pageHeight - margin;
-        }
-        page.drawText(line, { x: margin, y, size: fontSize, font });
-        y -= lineHeight;
-      }
-      y -= lineHeight * 0.35;
+    if (typeof window.html2pdf !== 'function') throw new Error('Authorization PDF engine unavailable.');
+    const host = createPrintableHost(buildAuthorizationHtml());
+    try {
+      return await window.html2pdf().set({
+        margin: 0,
+        filename: 'AUTHORIZATION.pdf',
+        image: { type: 'jpeg', quality: 0.97 },
+        html2canvas: { scale: 2, backgroundColor: '#fff', useCORS: true },
+        jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      }).from(host).outputPdf('blob');
+    } finally {
+      host.remove();
     }
-
-    const bytes = await pdf.save({ useObjectStreams:true, addDefaultPage:false });
-    return new Blob([bytes], { type:'application/pdf' });
   }
 
   async function addAuthorizationToPacket() {
     const blob = await createAuthorizationPdfBlob();
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const pdf = await PDFLib.PDFDocument.load(bytes);
-    const entries = Array.from({ length:pdf.getPageCount() }, (_, index) => ({
-      id:crypto.randomUUID(), pdfBytes:bytes, sourceIndex:index, fileName:'AUTHORIZATION.pdf', rotation:0
+    const entries = Array.from({ length: pdf.getPageCount() }, (_, index) => ({
+      id: crypto.randomUUID(), pdfBytes: bytes, sourceIndex: index, fileName: 'AUTHORIZATION.pdf', rotation: 0
     }));
     const existing = state.pages.findIndex(page => page.fileName === 'AUTHORIZATION.pdf');
     state.pages.splice(existing >= 0 ? existing + 1 : state.pages.length, 0, ...entries);
@@ -227,7 +191,7 @@ I authorize this dispute.
 
   function deleteSelectedTemplate() {
     const id = document.getElementById('letterTemplateSelect')?.value;
-    if (!id || id === 'authorization-default') return;
+    if (!id || id === DEFAULT_AUTH_TEMPLATE.id) return;
     const template = getTemplates().find(item => item.id === id);
     if (!template) return;
     if (!window.confirm(`Delete “${template.name}”?`)) return;
@@ -236,22 +200,8 @@ I authorize this dispute.
   }
 
   function setup() {
-    const mergeView = document.getElementById('mergeView');
-    const actions = mergeView?.querySelector('.header-actions');
-    if (!actions) return;
-
-    let button = document.getElementById('openAuthorizationFromMergeBtn');
-    if (!button) {
-      button = document.createElement('button');
-      button.type = 'button';
-      button.id = 'openAuthorizationFromMergeBtn';
-      button.className = 'btn btn-secondary';
-      button.textContent = '＋ Authorization';
-      button.title = 'Add Authorization to Packet';
-      const compress = document.getElementById('compressPacketBtn');
-      actions.insertBefore(button, compress || actions.firstChild);
-    }
-    if (button.dataset.bound !== 'true') {
+    const button = document.getElementById('openAuthorizationFromMergeBtn');
+    if (button && button.dataset.bound !== 'true') {
       button.dataset.bound = 'true';
       button.addEventListener('click', openModal);
     }
@@ -261,9 +211,15 @@ I authorize this dispute.
     document.getElementById('letterTemplateApplyBtn')?.addEventListener('click', async () => {
       const apply = document.getElementById('letterTemplateApplyBtn');
       if (apply) apply.disabled = true;
-      try { await addAuthorizationToPacket(); closeModal(); }
-      catch (error) { console.error('M&O Authorization insertion failed.', error); toast(error?.message || 'Could not add authorization to packet', 'error'); }
-      finally { if (apply) apply.disabled = false; }
+      try {
+        await addAuthorizationToPacket();
+        closeModal();
+      } catch (error) {
+        console.error('M&O Authorization insertion failed.', error);
+        toast(error?.message || 'Could not add authorization to packet', 'error');
+      } finally {
+        if (apply) apply.disabled = false;
+      }
     });
     document.getElementById('letterTemplateBureau')?.addEventListener('change', updateBureauAddress);
     document.getElementById('letterTemplateSelect')?.addEventListener('change', updateTemplateDeleteState);
@@ -276,19 +232,19 @@ I authorize this dispute.
   Object.assign(window, {
     AUTH_BUREAUS,
     DEFAULT_AUTH_TEMPLATE,
-    getAuthTemplates:getTemplates,
-    saveAuthTemplates:saveTemplates,
+    getAuthTemplates: getTemplates,
+    saveAuthTemplates: saveTemplates,
     getEasternToday,
     formatAuthDate,
-    renderLetterTemplateOptions:renderTemplateOptions,
-    updateLetterTemplateModalAddress:updateBureauAddress,
-    openLetterTemplateModal:openModal,
-    closeLetterTemplateModal:closeModal,
+    renderLetterTemplateOptions: renderTemplateOptions,
+    updateLetterTemplateModalAddress: updateBureauAddress,
+    openLetterTemplateModal: openModal,
+    closeLetterTemplateModal: closeModal,
     buildAuthorizationHtml,
     createAuthorizationPdfBlob,
     addAuthorizationToPacket,
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup, { once:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup, { once: true });
   else setup();
 })();
