@@ -9,195 +9,70 @@
 </head>
 <body>
   <div id="globalDropOverlay" class="global-drop-overlay" aria-hidden="true">
-    <div class="global-drop-card">
-      <div class="global-drop-icon">↑</div>
-      <div>
-        <strong>Drop PDFs to add them to the packet</strong>
-        <span>Release anywhere in the workspace</span>
-      </div>
-    </div>
+    <div class="global-drop-card"><div class="global-drop-icon">↑</div><div><strong>Drop PDFs to add them to the packet</strong><span>Release anywhere in the workspace</span></div></div>
   </div>
-
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark" id="brandSidebarToggle" aria-hidden="true">
-          <img src="assets/poop.png" alt="TUBOL Merger Pro" />
-        </div>
-        <div>
-          <div class="brand-name">PDF Workspace</div>
-          <div class="brand-subtitle">Organize · Write · Merge · Export</div>
-        </div>
+        <div class="brand-mark" aria-hidden="true"><img src="assets/poop.png" alt="TUBOL Merger Pro" /></div>
+        <div><div class="brand-name">PDF Workspace</div><div class="brand-subtitle">Organize · Write · Merge · Export</div></div>
       </div>
-      <div class="top-actions">
-        <button class="btn btn-ghost" id="settingsBtn" type="button" title="Open settings">⚙ <span class="btn-label">Settings</span></button>
-      </div>
+      <div class="top-actions"><button class="btn btn-ghost" id="settingsBtn" type="button" title="Open settings">⚙ <span class="btn-label">Settings</span></button></div>
     </header>
-
     <main class="workspace">
       <section class="content">
         <section id="mergeView" class="view active-view">
           <div class="view-header">
-            <div>
-              <p class="eyebrow">DOCUMENT ASSEMBLY</p>
-              <h1>PDF Packet</h1>
-              <p class="subtext">Add PDFs, arrange pages, insert your authorization, then export one polished packet.</p>
-            </div>
+            <div><p class="eyebrow">DOCUMENT ASSEMBLY</p><h1>PDF Packet</h1><p class="subtext">Add PDFs, arrange pages, insert your authorization, then export one polished packet.</p></div>
             <div class="header-actions">
-              <button class="btn btn-secondary" id="addPdfBtn">＋ Add PDFs</button>
-              <button class="btn btn-secondary" id="compressPacketBtn">Compress Packet</button>
-              <button class="btn btn-primary" id="mergeExportBtn">Merge &amp; Download</button>
+              <button class="btn btn-secondary" id="addPdfBtn" type="button">＋ Add PDFs</button>
+              <button class="btn btn-secondary" id="openAuthorizationFromMergeBtn" type="button" title="Add Authorization to Packet">＋ Authorization</button>
+              <button class="btn btn-secondary" id="compressPacketBtn" type="button">Compress Packet</button>
+              <button class="btn btn-primary" id="mergeExportBtn" type="button">Merge &amp; Download</button>
               <input id="pdfInput" type="file" accept="application/pdf" multiple hidden />
             </div>
           </div>
-
-          <div id="dropZone" class="drop-zone">
-            <div class="drop-icon">↑</div>
-            <div>
-              <strong>Drop PDF files here</strong>
-              <span>or click to browse · PDFs stay on your device</span>
-            </div>
-          </div>
-
-          <div class="organizer-toolbar">
-            <div class="selection-summary" id="selectionSummary">0 pages</div>
-            <div class="toolbar-actions">
-              <button class="mini-btn" id="rotateLeftBtn">↶ Rotate</button>
-              <button class="mini-btn" id="duplicatePageBtn">⧉ Duplicate</button>
-              <button class="mini-btn danger" id="deletePageBtn">Delete</button>
-              <button class="mini-btn" id="clearAllBtn">Clear all</button>
-            </div>
-          </div>
-
-          <div id="emptyState" class="empty-state">
-            <div class="empty-illustration"><span></span><span></span><span></span></div>
-            <h2>Your page board is empty</h2>
-            <p>Add one or more PDFs to see individual pages here. Drag pages to change their order.</p>
-          </div>
+          <div id="dropZone" class="drop-zone"><div class="drop-icon">↑</div><div><strong>Drop PDF files here</strong><span>or click to browse · PDFs stay on your device</span></div></div>
+          <div class="organizer-toolbar"><div class="selection-summary" id="selectionSummary">0 pages</div><div class="toolbar-actions"><button class="mini-btn" id="rotateLeftBtn" type="button">↶ Rotate</button><button class="mini-btn" id="duplicatePageBtn" type="button">⧉ Duplicate</button><button class="mini-btn danger" id="deletePageBtn" type="button">Delete</button><button class="mini-btn" id="clearAllBtn" type="button">Clear all</button></div></div>
+          <div id="emptyState" class="empty-state"><div class="empty-illustration"><span></span><span></span><span></span></div><h2>Your page board is empty</h2><p>Add one or more PDFs to see individual pages here. Drag pages to change their order.</p></div>
           <div id="pageGrid" class="page-grid"></div>
         </section>
       </section>
     </main>
-
     <div id="letterTemplateModal" class="letter-template-modal" aria-hidden="true">
       <div class="letter-template-card" role="dialog" aria-modal="true" aria-labelledby="letterTemplateTitle">
-        <div class="panel-close-row">
-          <div><div class="eyebrow">AUTHORIZATION</div><h2 id="letterTemplateTitle">Add Authorization</h2></div>
-          <button class="preview-tool close" id="letterTemplateCloseBtn" type="button" title="Close">✕</button>
-        </div>
+        <div class="panel-close-row"><div><div class="eyebrow">AUTHORIZATION</div><h2 id="letterTemplateTitle">Add Authorization</h2></div><button class="preview-tool close" id="letterTemplateCloseBtn" type="button" title="Close">✕</button></div>
         <div class="template-form-grid">
-          <label>Template<select id="letterTemplateSelect"></select></label>
-          <button class="btn btn-danger-soft" id="deleteSavedTemplateBtn" type="button" title="Delete saved template">Delete Template</button>
+          <label>Template<select id="letterTemplateSelect"></select></label><button class="btn btn-danger-soft" id="deleteSavedTemplateBtn" type="button" title="Delete saved template">Delete Template</button>
           <label>Consumer name<input id="letterTemplateClientName" type="text" placeholder="Paste full name" autocomplete="off"></label>
           <label>Date<input id="letterTemplateDate" type="date"></label>
           <label>Bureau<select id="letterTemplateBureau"><option value="experian">Experian</option><option value="equifax">Equifax</option><option value="transunion">TransUnion</option></select></label>
         </div>
         <div class="template-address-preview"><span class="eyebrow">BUREAU ADDRESS</span><strong id="letterTemplateBureauAddress"></strong></div>
         <p class="subtext">Choose the authorization template, enter the consumer information, and add it directly to the packet.</p>
-        <div class="save-export-actions">
-          <span></span>
-          <button class="btn btn-secondary" id="letterTemplateCancelBtn" type="button">Cancel</button>
-          <button class="btn btn-primary" id="letterTemplateApplyBtn" type="button">Add Authorization to Packet</button>
-        </div>
+        <div class="save-export-actions"><span></span><button class="btn btn-secondary" id="letterTemplateCancelBtn" type="button">Cancel</button><button class="btn btn-primary" id="letterTemplateApplyBtn" type="button">Add Authorization to Packet</button></div>
       </div>
     </div>
-
     <div id="packetCompressPanel" class="packet-compress-panel" aria-hidden="true">
-      <div class="packet-compress-card">
-        <div class="panel-close-row"><div><div class="eyebrow">PACKET OPTIMIZATION</div><h2>Compress current packet</h2></div><button class="preview-tool close" id="packetCompressCloseBtn" type="button" title="Close">✕</button></div>
-        <p id="packetCompressMeta" class="subtext">Your current page board will be rasterized into a smaller PDF.</p>
-        <label class="range-label">Compression profile
-          <select id="packetCompressionSelect">
-            <option value="low">Smallest size</option>
-            <option value="medium" selected>Balanced</option>
-            <option value="high">Higher quality</option>
-          </select>
-        </label>
-        <div class="progress" id="packetCompressProgress"><span></span></div>
-        <button class="btn btn-primary" id="packetCompressBtn">Compress &amp; Download</button>
-      </div>
+      <div class="packet-compress-card"><div class="panel-close-row"><div><div class="eyebrow">PACKET OPTIMIZATION</div><h2>Compress current packet</h2></div><button class="preview-tool close" id="packetCompressCloseBtn" type="button" title="Close">✕</button></div><p id="packetCompressMeta" class="subtext">Your current page board will be rasterized into a smaller PDF.</p><label class="range-label">Compression profile<select id="packetCompressionSelect"><option value="low">Smallest size</option><option value="medium" selected>Balanced</option><option value="high">Higher quality</option></select></label><div class="progress" id="packetCompressProgress"><span></span></div><button class="btn btn-primary" id="packetCompressBtn" type="button">Compress &amp; Download</button></div>
     </div>
-
     <div id="saveExportModal" class="save-export-modal" aria-hidden="true">
-      <div class="save-export-card" role="dialog" aria-modal="true" aria-labelledby="saveExportTitle">
-        <div class="panel-close-row">
-          <div><div class="eyebrow">EXPORT PACKET</div><h2 id="saveExportTitle">Save merged PDF</h2></div>
-          <button class="preview-tool close" id="saveExportCloseBtn" type="button" title="Close">✕</button>
-        </div>
-        <label class="save-name-label" for="mergeFilenameInput">File name</label>
-        <div class="save-name-row"><input id="mergeFilenameInput" type="text" autocomplete="off" spellcheck="false"><span>.pdf</span></div>
-        <p class="subtext">Choose a folder in the save dialog. Your original PDFs stay unchanged.</p>
-        <div class="save-export-actions">
-          <button class="btn btn-secondary" id="saveExportCancelBtn" type="button">Cancel</button>
-          <button class="btn btn-primary" id="saveExportConfirmBtn" type="button">Choose location &amp; save</button>
-        </div>
-      </div>
+      <div class="save-export-card" role="dialog" aria-modal="true" aria-labelledby="saveExportTitle"><div class="panel-close-row"><div><div class="eyebrow">EXPORT PACKET</div><h2 id="saveExportTitle">Save merged PDF</h2></div><button class="preview-tool close" id="saveExportCloseBtn" type="button" title="Close">✕</button></div><label class="save-name-label" for="mergeFilenameInput">File name</label><div class="save-name-row"><input id="mergeFilenameInput" type="text" autocomplete="off" spellcheck="false"><span>.pdf</span></div><p class="subtext">Choose a folder in the save dialog. Your original PDFs stay unchanged.</p><div class="save-export-actions"><button class="btn btn-secondary" id="saveExportCancelBtn" type="button">Cancel</button><button class="btn btn-primary" id="saveExportConfirmBtn" type="button">Choose location &amp; save</button></div></div>
     </div>
-
     <div id="pdfPreviewModal" class="pdf-preview-modal" aria-hidden="true">
-      <div class="pdf-preview-shell continuous-preview-shell" role="dialog" aria-modal="true" aria-labelledby="previewFileName">
-        <header class="pdf-preview-header">
-          <div>
-            <div id="previewFileName" class="preview-title">PDF Packet Preview</div>
-            <div id="previewPageLabel" class="preview-meta">All pages</div>
-          </div>
-          <div class="preview-actions">
-            <button class="preview-tool" id="previewZoomOutBtn" type="button" title="Zoom out">−</button>
-            <button class="preview-tool" id="previewFitBtn" type="button" title="Fit pages">Fit</button>
-            <button class="preview-tool" id="previewZoomInBtn" type="button" title="Zoom in">＋</button>
-            <button class="preview-tool close" id="previewCloseBtn" type="button" title="Close preview">✕</button>
-          </div>
-        </header>
-        <div id="continuousPreviewCanvasWrap" class="continuous-preview-scroll" tabindex="0" aria-label="Continuous PDF preview"></div>
-        <div class="pdf-preview-footer">Scroll to move through every page · The selected page is highlighted when the preview opens</div>
-      </div>
+      <div class="pdf-preview-shell continuous-preview-shell" role="dialog" aria-modal="true" aria-labelledby="previewFileName"><header class="pdf-preview-header"><div><div id="previewFileName" class="preview-title">PDF Packet Preview</div><div id="previewPageLabel" class="preview-meta">All pages</div></div><div class="preview-actions"><button class="preview-tool" id="previewZoomOutBtn" type="button" title="Zoom out">−</button><button class="preview-tool" id="previewFitBtn" type="button" title="Fit pages">Fit</button><button class="preview-tool" id="previewZoomInBtn" type="button" title="Zoom in">＋</button><button class="preview-tool close" id="previewCloseBtn" type="button" title="Close preview">✕</button></div></header><div id="continuousPreviewCanvasWrap" class="continuous-preview-scroll" tabindex="0" aria-label="Continuous PDF preview"></div><div class="pdf-preview-footer">Scroll to move through every page · The selected page is highlighted when the preview opens</div></div>
     </div>
-
     <div id="settingsModal" class="settings-modal" aria-hidden="true">
-      <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-        <div class="panel-close-row">
-          <div><div class="eyebrow">WORKSPACE SETTINGS</div><h2 id="settingsTitle">Settings</h2></div>
-          <button class="preview-tool close" id="settingsCloseBtn" type="button" title="Close">✕</button>
-        </div>
-        <div class="settings-section">
-          <div class="settings-section-title">Appearance</div>
-          <label class="settings-field">Theme
-            <select id="themeSelect">
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="aqua">Aqua</option>
-              <option value="adventure">Medieval Adventure</option>
-              <option value="zombie">Zombie</option>
-              <option value="warm">Warm</option>
-              <option value="contrast">High Contrast</option>
-            </select>
-          </label>
-          <div class="settings-color-grid">
-            <label class="settings-field">Button &amp; accent color
-              <div class="color-row"><input id="accentColorInput" type="color" value="#2563eb"><span id="accentColorValue">#2563EB</span><button type="button" class="settings-reset-btn" id="accentResetBtn">Reset</button></div>
-            </label>
-            <label class="settings-field">Text selection highlight
-              <div class="color-row"><input id="highlightColorInput" type="color" value="#fde68a"><span id="highlightColorValue">#FDE68A</span><button type="button" class="settings-reset-btn" id="highlightResetBtn">Reset</button></div>
-            </label>
-          </div>
-          <p class="subtext">Accent affects buttons, key text, and active controls. Selection highlight uses the familiar light-blue browser-style selection by default.</p>
-        </div>
-        <div class="settings-section">
-          <div class="settings-section-title">Desktop icon</div>
-          <p class="subtext">To change the Windows icon, replace <strong>assets/icon.ico</strong>. For macOS, replace <strong>assets/icon.icns</strong>. Then rebuild the app.</p>
-        </div>
-        <div class="save-export-actions"><span></span><button class="btn btn-primary" id="settingsDoneBtn" type="button">Done</button></div>
-      </div>
+      <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="panel-close-row"><div><div class="eyebrow">WORKSPACE SETTINGS</div><h2 id="settingsTitle">Settings</h2></div><button class="preview-tool close" id="settingsCloseBtn" type="button" title="Close">✕</button></div><div class="settings-section"><div class="settings-section-title">Appearance</div><label class="settings-field">Theme<select id="themeSelect"><option value="light">Light</option><option value="dark">Dark</option><option value="aqua">Aqua</option><option value="adventure">Medieval Adventure</option><option value="zombie">Zombie</option><option value="warm">Warm</option><option value="contrast">High Contrast</option></select></label><div class="settings-color-grid"><label class="settings-field">Button &amp; accent color<div class="color-row"><input id="accentColorInput" type="color" value="#2563eb"><span id="accentColorValue">#2563EB</span><button type="button" class="settings-reset-btn" id="accentResetBtn">Reset</button></div></label><label class="settings-field">Text selection highlight<div class="color-row"><input id="highlightColorInput" type="color" value="#b3d7ff"><span id="highlightColorValue">#B3D7FF</span><button type="button" class="settings-reset-btn" id="highlightResetBtn">Reset</button></div></label></div><p class="subtext">Accent affects buttons, key text, and active controls. Selection highlight uses the familiar light-blue browser-style selection by default.</p></div><div class="settings-section"><div class="settings-section-title">Desktop icon</div><p class="subtext">To change the Windows icon, replace <strong>assets/icon.ico</strong>. For macOS, replace <strong>assets/icon.icns</strong>. Then rebuild the app.</p></div><div class="save-export-actions"><span></span><button class="btn btn-primary" id="settingsDoneBtn" type="button">Done</button></div></div>
     </div>
-
     <div id="toast" class="toast"></div>
   </div>
-
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="functions.js"></script>
+  <script src="authorization-mdo.js"></script>
   <script src="pdf-drop-scope.js"></script>
 </body>
 </html>
