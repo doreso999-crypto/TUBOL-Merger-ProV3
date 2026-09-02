@@ -6,23 +6,29 @@
   const AUTH_TEMPLATE = {
     id: AUTH_TEMPLATE_ID,
     name: 'Authorization Letter',
-    html: `
-      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12pt;line-height:1.55;color:#000;">
-        <p style="margin:0 0 18px;">{{BUREAU}}<br>{{BUREAU_ADDRESS_LINE_1}}<br>{{BUREAU_ADDRESS_LINE_2}}</p>
+    text: [
+      '{{BUREAU}}',
+      '{{BUREAU_ADDRESS_LINE_1}}',
+      '{{BUREAU_ADDRESS_LINE_2}}',
+      '',
+      'This is {{CLIENT_NAME}} and I authorize this dispute.',
+      '',
+      'Today is {{DATE}}.',
+      '',
+      'I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.',
+      '',
+      'This is not a third party agency or any other individual authorizing this dispute.',
+      '',
+      'Please do not delay, redirect, or decline processing for any such reason. Again, this is {{CLIENT_NAME}}',
+      '',
+      'I authorize this dispute.'
+    ]
+  };
 
-        <p style="margin:0 0 18px;">This is <strong>{{CLIENT_NAME}}</strong> and I authorize this dispute.</p>
-
-        <p style="margin:0 0 18px;">Today is <strong>{{DATE}}</strong>.</p>
-
-        <p style="margin:0 0 18px;">I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.</p>
-
-        <p style="margin:0 0 18px;">This is not a third party agency or any other individual authorizing this dispute.</p>
-
-        <p style="margin:0 0 18px;">Please do not delay, redirect, or decline processing for any such reason. Again, this is <strong>{{CLIENT_NAME}}</strong></p>
-
-        <p style="margin:0;">I authorize this dispute.</p>
-      </div>
-    `
+  const BUREAU_ADDRESSES = {
+    experian: ['Experian', 'P.O. Box 2002', 'Allen, TX 75013'],
+    equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
+    transunion: ['TransUnion Consumer Relations', 'P.O. Box 2000', 'Chester, PA 19016-2000']
   };
 
   function getEasternToday() {
@@ -61,7 +67,6 @@
       option.textContent = template.name;
       select.appendChild(option);
     }
-
     select.disabled = false;
 
     const deleteButton = document.getElementById('deleteSavedTemplateBtn');
@@ -72,15 +77,9 @@
     const target = document.getElementById('letterTemplateBureauAddress');
     if (!target) return;
 
-    const bureau = document.getElementById('letterTemplateBureau')?.value;
-    const addresses = {
-      experian: ['Experian', 'P.O. Box 2002', 'Allen, TX 75013'],
-      equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
-      transunion: ['TransUnion Consumer Relations', 'P.O. Box 2000', 'Chester, PA 19016-2000']
-    };
-
-    const address = addresses[bureau] || ['', '', ''];
-    target.innerHTML = `${address[0]}<br>${address[1]}<br>${address[2]}`;
+    const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
+    const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
+    target.innerHTML = `${escapeHtml(address[0])}<br>${escapeHtml(address[1])}<br>${escapeHtml(address[2])}`;
   }
 
   function openModal() {
@@ -118,24 +117,19 @@
     return getTemplates().find(template => template.id === selectedId) || AUTH_TEMPLATE;
   }
 
-  function buildAuthorizationHtml() {
-    const template = getSelectedTemplate();
+  function buildAuthorizationText() {
     const clientName = document.getElementById('letterTemplateClientName')?.value?.trim() || '';
     const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || '');
     const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
-    const addresses = {
-      experian: ['Experian', 'P.O. Box 2002', 'Allen, TX 75013'],
-      equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
-      transunion: ['TransUnion Consumer Relations', 'P.O. Box 2000', 'Chester, PA 19016-2000']
-    };
-    const address = addresses[bureau] || addresses.experian;
+    const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
 
-    return template.html
-      .replaceAll('{{CLIENT_NAME}}', escapeHtml(clientName))
-      .replaceAll('{{DATE}}', escapeHtml(date))
-      .replaceAll('{{BUREAU}}', escapeHtml(address[0]))
-      .replaceAll('{{BUREAU_ADDRESS_LINE_1}}', escapeHtml(address[1]))
-      .replaceAll('{{BUREAU_ADDRESS_LINE_2}}', escapeHtml(address[2]));
+    return getSelectedTemplate().text.map(line => line
+      .replaceAll('{{CLIENT_NAME}}', clientName)
+      .replaceAll('{{DATE}}', date)
+      .replaceAll('{{BUREAU}}', address[0])
+      .replaceAll('{{BUREAU_ADDRESS_LINE_1}}', address[1])
+      .replaceAll('{{BUREAU_ADDRESS_LINE_2}}', address[2])
+    );
   }
 
   function escapeHtml(value) {
@@ -147,61 +141,107 @@
       .replaceAll("'", '&#39;');
   }
 
-  function createPrintableHost(html) {
-    const host = document.createElement('div');
-    host.setAttribute('aria-hidden', 'true');
-    Object.assign(host.style, {
-      position: 'fixed',
-      left: '-100000px',
-      top: '0',
-      width: '816px',
-      minHeight: '1056px',
-      boxSizing: 'border-box',
-      padding: '96px',
-      margin: '0',
-      background: '#fff',
-      color: '#000',
-      pointerEvents: 'none',
-      opacity: '1',
-      visibility: 'visible',
-      overflow: 'visible'
-    });
-    host.innerHTML = html;
-    document.body.appendChild(host);
-    return host;
+  function wrapText(text, font, size, maxWidth) {
+    const words = String(text).split(/\s+/).filter(Boolean);
+    const lines = [];
+    let current = '';
+
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (!current || font.widthOfTextAtSize(candidate, size) <= maxWidth) {
+        current = candidate;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  }
+
+  function drawMixedLine(page, parts, x, y, regularFont, boldFont, size) {
+    let cursorX = x;
+    for (const part of parts) {
+      const font = part.bold ? boldFont : regularFont;
+      page.drawText(part.text, { x: cursorX, y, size, font, color: PDFLib.rgb(0, 0, 0) });
+      cursorX += font.widthOfTextAtSize(part.text, size);
+    }
   }
 
   async function createAuthorizationPdfBlob() {
-    if (typeof window.html2pdf !== 'function') {
+    if (!window.PDFLib) {
       throw new Error('Authorization PDF engine unavailable.');
     }
 
-    const host = createPrintableHost(buildAuthorizationHtml());
-    try {
-      return await window.html2pdf().set({
-        margin: 0,
-        filename: 'AUTHORIZATION.pdf',
-        image: { type: 'jpeg', quality: 0.97 },
-        html2canvas: {
-          scale: 2,
-          backgroundColor: '#fff',
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 816
-        },
-        jsPDF: {
-          unit: 'pt',
-          format: 'letter',
-          orientation: 'portrait'
-        },
-        pagebreak: {
-          mode: ['css', 'legacy']
-        }
-      }).from(host).outputPdf('blob');
-    } finally {
-      host.remove();
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    const page = pdfDoc.addPage([612, 792]);
+    const regularFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const boldFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+    const clientName = document.getElementById('letterTemplateClientName')?.value?.trim() || '';
+    const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || '');
+    const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
+    const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
+
+    const left = 72;
+    const maxWidth = 468;
+    const size = 12;
+    const lineHeight = 19;
+    let y = 720;
+
+    page.drawText(address[0], { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+    y -= lineHeight;
+    page.drawText(address[1], { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+    y -= lineHeight;
+    page.drawText(address[2], { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+    y -= 38;
+
+    drawMixedLine(page, [
+      { text: 'This is ', bold: false },
+      { text: clientName, bold: true },
+      { text: ' and I authorize this dispute.', bold: false }
+    ], left, y, regularFont, boldFont, size);
+    y -= 38;
+
+    drawMixedLine(page, [
+      { text: 'Today is ', bold: false },
+      { text: date, bold: true },
+      { text: '.', bold: false }
+    ], left, y, regularFont, boldFont, size);
+    y -= 38;
+
+    const paragraphs = [
+      `I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.`,
+      'This is not a third party agency or any other individual authorizing this dispute.'
+    ];
+
+    for (const paragraph of paragraphs) {
+      for (const line of wrapText(paragraph, regularFont, size, maxWidth)) {
+        page.drawText(line, { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+        y -= lineHeight;
+      }
+      y -= 19;
     }
+
+    const finalParagraph = `Please do not delay, redirect, or decline processing for any such reason. Again, this is ${clientName}`;
+    for (const line of wrapText(finalParagraph, regularFont, size, maxWidth - boldFont.widthOfTextAtSize(clientName, size) + 20)) {
+      if (line.endsWith(clientName) && clientName) {
+        const regularPart = line.slice(0, -clientName.length);
+        drawMixedLine(page, [
+          { text: regularPart, bold: false },
+          { text: clientName, bold: true }
+        ], left, y, regularFont, boldFont, size);
+      } else {
+        page.drawText(line, { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+      }
+      y -= lineHeight;
+    }
+    y -= 19;
+
+    page.drawText('I authorize this dispute.', { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+
+    const bytes = await pdfDoc.save();
+    return new Blob([bytes], { type: 'application/pdf' });
   }
 
   async function addAuthorizationToPacket() {
@@ -223,7 +263,6 @@
   }
 
   function deleteSelectedTemplate() {
-    // The built-in authorization template remains available by design.
     renderTemplateOptions();
   }
 
@@ -264,7 +303,7 @@
   Object.assign(window, {
     AUTH_TEMPLATE,
     DEFAULT_AUTH_TEMPLATE: AUTH_TEMPLATE,
-    AUTH_BUREAUS: {},
+    AUTH_BUREAUS: BUREAU_ADDRESSES,
     getAuthTemplates: getTemplates,
     saveAuthTemplates: saveTemplates,
     getEasternToday,
@@ -273,7 +312,7 @@
     updateLetterTemplateModalAddress: updateBureauAddress,
     openLetterTemplateModal: openModal,
     closeLetterTemplateModal: closeModal,
-    buildAuthorizationHtml,
+    buildAuthorizationHtml: buildAuthorizationText,
     createAuthorizationPdfBlob,
     addAuthorizationToPacket
   });
