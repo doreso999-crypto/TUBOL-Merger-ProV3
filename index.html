@@ -23,9 +23,10 @@
       <section class="content">
         <section id="mergeView" class="view active-view">
           <div class="view-header">
-            <div><p class="eyebrow">DOCUMENT ASSEMBLY</p><h1>PDF Packet</h1><p class="subtext">Add PDFs, arrange pages, export one polished packet.</p></div>
+            <div><p class="eyebrow">DOCUMENT ASSEMBLY</p><h1>PDF Packet</h1><p class="subtext">Add PDFs, arrange pages, insert your authorization, then export one polished packet.</p></div>
             <div class="header-actions">
               <button class="btn btn-secondary" id="addPdfBtn" type="button">＋ Add PDFs</button>
+              <button class="btn btn-secondary" id="openAuthorizationFromMergeBtn" type="button" title="Add Authorization to Packet">＋ Authorization</button>
               <button class="btn btn-secondary" id="compressPacketBtn" type="button">Compress Packet</button>
               <button class="btn btn-primary" id="mergeExportBtn" type="button">Merge &amp; Download</button>
               <input id="pdfInput" type="file" accept="application/pdf" multiple hidden />
@@ -38,6 +39,20 @@
         </section>
       </section>
     </main>
+    <div id="letterTemplateModal" class="letter-template-modal" aria-hidden="true">
+      <div class="letter-template-card" role="dialog" aria-modal="true" aria-labelledby="letterTemplateTitle">
+        <div class="panel-close-row"><div><div class="eyebrow">AUTHORIZATION</div><h2 id="letterTemplateTitle">Add Authorization</h2></div><button class="preview-tool close" id="letterTemplateCloseBtn" type="button" title="Close">✕</button></div>
+        <div class="template-form-grid">
+          <label>Template<select id="letterTemplateSelect"></select></label><button class="btn btn-danger-soft" id="deleteSavedTemplateBtn" type="button" title="Delete saved template">Delete Template</button>
+          <label>Consumer name<input id="letterTemplateClientName" type="text" placeholder="Paste full name" autocomplete="off"></label>
+          <label>Date<input id="letterTemplateDate" type="date"></label>
+          <label>Bureau<select id="letterTemplateBureau"><option value="experian">Experian</option><option value="equifax">Equifax</option><option value="transunion">TransUnion</option></select></label>
+        </div>
+        <div class="template-address-preview"><span class="eyebrow">BUREAU ADDRESS</span><strong id="letterTemplateBureauAddress"></strong></div>
+        <p class="subtext">Choose the authorization template, enter the consumer information, and add it directly to the packet.</p>
+        <div class="save-export-actions"><span></span><button class="btn btn-secondary" id="letterTemplateCancelBtn" type="button">Cancel</button><button class="btn btn-primary" id="letterTemplateApplyBtn" type="button">Add Authorization to Packet</button></div>
+      </div>
+    </div>
     <div id="packetCompressPanel" class="packet-compress-panel" aria-hidden="true">
       <div class="packet-compress-card"><div class="panel-close-row"><div><div class="eyebrow">PACKET OPTIMIZATION</div><h2>Compress current packet</h2></div><button class="preview-tool close" id="packetCompressCloseBtn" type="button" title="Close">✕</button></div><p id="packetCompressMeta" class="subtext">Your current page board will be rasterized into a smaller PDF.</p><label class="range-label">Compression profile<select id="packetCompressionSelect"><option value="low">Smallest size</option><option value="medium" selected>Balanced</option><option value="high">Higher quality</option></select></label><div class="progress" id="packetCompressProgress"><span></span></div><button class="btn btn-primary" id="packetCompressBtn" type="button">Compress &amp; Download</button></div>
     </div>
@@ -55,7 +70,9 @@
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="functions.js"></script>
+  <script src="authorization-mdo.js"></script>
   <script src="pdf-drop-scope.js"></script>
 </body>
 </html>
