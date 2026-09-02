@@ -1,4 +1,4 @@
-/* TUBOL PDF Workspace loader. M&O packet, Authorization, and Settings are live modules. */
+/* TUBOL PDF Workspace loader. M&O packet, Authorization, Settings, and Templates are live modules. */
 document.write(`
   <link rel="stylesheet" href="modal-consistency.css">
   <link rel="stylesheet" href="preview-theme.css">
@@ -11,4 +11,5 @@ document.write(`
   <script src="workspace-ui-fixes.js"><\/script>
   <script src="authorization-mdo.js"><\/script>
   <script src="settings.js"><\/script>
+  <script src="templates.js"><\/script>
 `);
