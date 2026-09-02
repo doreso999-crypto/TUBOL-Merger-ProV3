@@ -1,4 +1,4 @@
-/* TUBOL PDF Workspace loader. Core workspace, Settings, and Templates modules. */
+/* TUBOL PDF Workspace loader. Core workspace and Settings modules. */
 document.write(`
   <link rel="stylesheet" href="modal-consistency.css">
   <link rel="stylesheet" href="preview-theme.css">
@@ -9,6 +9,10 @@ document.write(`
   <script src="pdf-render-fix.js"><\/script>
   <script src="workspace-ui-fixes.js"><\/script>
   <script src="settings.js"><\/script>
-  <script src="templates.js"><\/script>
-  <script>try { localStorage.removeItem('pdfWorkspaceAuthTemplates'); } catch (e) { console.warn('Old authorization template storage could not be cleared.', e); }<\/script>
+  <script>try {
+    localStorage.removeItem('pdfWorkspaceAuthTemplates');
+    localStorage.removeItem('pdfWorkspaceTemplates');
+  } catch (e) {
+    console.warn('Old template storage could not be cleared.', e);
+  }<\/script>
 `);
