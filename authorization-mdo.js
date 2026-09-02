@@ -1,6 +1,29 @@
-/* TUBOL — authorization generator shell with no built-in letter template. */
+/* TUBOL — authorization letter generator. */
 (() => {
   'use strict';
+
+  const AUTH_TEMPLATE_ID = 'authorization-standard-v2';
+  const AUTH_TEMPLATE = {
+    id: AUTH_TEMPLATE_ID,
+    name: 'Authorization Letter',
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12pt;line-height:1.55;color:#000;">
+        <p style="margin:0 0 18px;">{{BUREAU}}<br>{{BUREAU_ADDRESS_LINE_1}}<br>{{BUREAU_ADDRESS_LINE_2}}</p>
+
+        <p style="margin:0 0 18px;">This is <strong>{{CLIENT_NAME}}</strong> and I authorize this dispute.</p>
+
+        <p style="margin:0 0 18px;">Today is <strong>{{DATE}}</strong>.</p>
+
+        <p style="margin:0 0 18px;">I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.</p>
+
+        <p style="margin:0 0 18px;">This is not a third party agency or any other individual authorizing this dispute.</p>
+
+        <p style="margin:0 0 18px;">Please do not delay, redirect, or decline processing for any such reason. Again, this is <strong>{{CLIENT_NAME}}</strong></p>
+
+        <p style="margin:0;">I authorize this dispute.</p>
+      </div>
+    `
+  };
 
   function getEasternToday() {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -20,13 +43,11 @@
   }
 
   function getTemplates() {
-    // Intentionally empty. The UI remains available, but no authorization
-    // letter template is preloaded or stored by the application.
-    return [];
+    return [AUTH_TEMPLATE];
   }
 
   function saveTemplates() {
-    localStorage.removeItem('pdfWorkspaceAuthTemplates');
+    localStorage.setItem('pdfWorkspaceAuthTemplates', JSON.stringify([AUTH_TEMPLATE]));
   }
 
   function renderTemplateOptions() {
@@ -34,16 +55,14 @@
     if (!select) return;
 
     select.innerHTML = '';
-    const templates = getTemplates();
-
-    for (const template of templates) {
+    for (const template of getTemplates()) {
       const option = document.createElement('option');
       option.value = template.id;
       option.textContent = template.name;
       select.appendChild(option);
     }
 
-    select.disabled = true;
+    select.disabled = false;
 
     const deleteButton = document.getElementById('deleteSavedTemplateBtn');
     if (deleteButton) deleteButton.disabled = true;
@@ -55,12 +74,13 @@
 
     const bureau = document.getElementById('letterTemplateBureau')?.value;
     const addresses = {
-      experian: 'Experian, P.O. Box 4500, Allen, TX 75013',
-      equifax: 'Equifax Information Services LLC, P.O. Box 740256, Atlanta, GA 30374-0256',
-      transunion: 'TransUnion Consumer Relations, P.O. Box 2000, Chester, PA 19016-2000'
+      experian: ['Experian', 'P.O. Box 2002', 'Allen, TX 75013'],
+      equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
+      transunion: ['TransUnion Consumer Relations', 'P.O. Box 2000', 'Chester, PA 19016-2000']
     };
 
-    target.textContent = addresses[bureau] || '';
+    const address = addresses[bureau] || ['', '', ''];
+    target.innerHTML = `${address[0]}<br>${address[1]}<br>${address[2]}`;
   }
 
   function openModal() {
@@ -93,9 +113,38 @@
     if (button) button.disabled = true;
   }
 
+  function getSelectedTemplate() {
+    const selectedId = document.getElementById('letterTemplateSelect')?.value;
+    return getTemplates().find(template => template.id === selectedId) || AUTH_TEMPLATE;
+  }
+
   function buildAuthorizationHtml() {
-    // No built-in letter template: generate an intentionally blank page.
-    return '';
+    const template = getSelectedTemplate();
+    const clientName = document.getElementById('letterTemplateClientName')?.value?.trim() || '';
+    const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || '');
+    const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
+    const addresses = {
+      experian: ['Experian', 'P.O. Box 2002', 'Allen, TX 75013'],
+      equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
+      transunion: ['TransUnion Consumer Relations', 'P.O. Box 2000', 'Chester, PA 19016-2000']
+    };
+    const address = addresses[bureau] || addresses.experian;
+
+    return template.html
+      .replaceAll('{{CLIENT_NAME}}', escapeHtml(clientName))
+      .replaceAll('{{DATE}}', escapeHtml(date))
+      .replaceAll('{{BUREAU}}', escapeHtml(address[0]))
+      .replaceAll('{{BUREAU_ADDRESS_LINE_1}}', escapeHtml(address[1]))
+      .replaceAll('{{BUREAU_ADDRESS_LINE_2}}', escapeHtml(address[2]));
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
   function createPrintableHost(html) {
@@ -170,11 +219,12 @@
     const existing = state.pages.findIndex(page => page.fileName === 'AUTHORIZATION.pdf');
     state.pages.splice(existing >= 0 ? existing + 1 : state.pages.length, 0, ...entries);
     await renderPageBoard();
-    toast('Blank authorization page added to packet', 'success');
+    toast('Authorization added to packet', 'success');
   }
 
   function deleteSelectedTemplate() {
-    saveTemplates();
+    // The built-in authorization template remains available by design.
+    renderTemplateOptions();
   }
 
   function setup() {
@@ -212,8 +262,8 @@
   }
 
   Object.assign(window, {
-    AUTH_TEMPLATE: null,
-    DEFAULT_AUTH_TEMPLATE: null,
+    AUTH_TEMPLATE,
+    DEFAULT_AUTH_TEMPLATE: AUTH_TEMPLATE,
     AUTH_BUREAUS: {},
     getAuthTemplates: getTemplates,
     saveAuthTemplates: saveTemplates,
