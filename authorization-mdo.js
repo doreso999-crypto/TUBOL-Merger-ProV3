@@ -59,7 +59,6 @@
   function renderTemplateOptions() {
     const select = document.getElementById('letterTemplateSelect');
     if (!select) return;
-
     select.innerHTML = '';
     for (const template of getTemplates()) {
       const option = document.createElement('option');
@@ -68,7 +67,6 @@
       select.appendChild(option);
     }
     select.disabled = false;
-
     const deleteButton = document.getElementById('deleteSavedTemplateBtn');
     if (deleteButton) deleteButton.disabled = true;
   }
@@ -76,7 +74,6 @@
   function updateBureauAddress() {
     const target = document.getElementById('letterTemplateBureauAddress');
     if (!target) return;
-
     const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
     const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
     target.innerHTML = `${escapeHtml(address[0])}<br>${escapeHtml(address[1])}<br>${escapeHtml(address[2])}`;
@@ -85,13 +82,10 @@
   function openModal() {
     const modal = document.getElementById('letterTemplateModal');
     if (!modal) return;
-
     saveTemplates();
     renderTemplateOptions();
-
     const date = document.getElementById('letterTemplateDate');
     if (date && !date.value) date.value = getEasternToday();
-
     updateBureauAddress();
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -101,7 +95,6 @@
   function closeModal() {
     const modal = document.getElementById('letterTemplateModal');
     if (!modal) return;
-
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
@@ -122,7 +115,6 @@
     const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || '');
     const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
     const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
-
     return getSelectedTemplate().text.map(line => line
       .replaceAll('{{CLIENT_NAME}}', clientName)
       .replaceAll('{{DATE}}', date)
@@ -145,7 +137,6 @@
     const words = String(text).split(/\s+/).filter(Boolean);
     const lines = [];
     let current = '';
-
     for (const word of words) {
       const candidate = current ? `${current} ${word}` : word;
       if (!current || font.widthOfTextAtSize(candidate, size) <= maxWidth) {
@@ -169,9 +160,7 @@
   }
 
   async function createAuthorizationPdfBlob() {
-    if (!window.PDFLib) {
-      throw new Error('Authorization PDF engine unavailable.');
-    }
+    if (!window.PDFLib) throw new Error('Authorization PDF engine unavailable.');
 
     const pdfDoc = await PDFLib.PDFDocument.create();
     const page = pdfDoc.addPage([612, 792]);
@@ -211,7 +200,7 @@
     y -= 38;
 
     const paragraphs = [
-      `I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.`,
+      'I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.',
       'This is not a third party agency or any other individual authorizing this dispute.'
     ];
 
@@ -224,8 +213,8 @@
     }
 
     const finalParagraph = `Please do not delay, redirect, or decline processing for any such reason. Again, this is ${clientName}`;
-    for (const line of wrapText(finalParagraph, regularFont, size, maxWidth - boldFont.widthOfTextAtSize(clientName, size) + 20)) {
-      if (line.endsWith(clientName) && clientName) {
+    for (const line of wrapText(finalParagraph, regularFont, size, maxWidth)) {
+      if (clientName && line.endsWith(clientName)) {
         const regularPart = line.slice(0, -clientName.length);
         drawMixedLine(page, [
           { text: regularPart, bold: false },
@@ -237,7 +226,6 @@
       y -= lineHeight;
     }
     y -= 19;
-
     page.drawText('I authorize this dispute.', { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
 
     const bytes = await pdfDoc.save();
@@ -247,17 +235,17 @@
   async function addAuthorizationToPacket() {
     const blob = await createAuthorizationPdfBlob();
     const bytes = new Uint8Array(await blob.arrayBuffer());
-    const pdf = await PDFLib.PDFDocument.load(bytes);
-    const entries = Array.from({ length: pdf.getPageCount() }, (_, index) => ({
+
+    // Replace any previous authorization entry instead of stacking duplicates.
+    state.pages = state.pages.filter(page => page.fileName !== 'AUTHORIZATION.pdf');
+    state.pages.push({
       id: crypto.randomUUID(),
       pdfBytes: bytes,
-      sourceIndex: index,
+      sourceIndex: 0,
       fileName: 'AUTHORIZATION.pdf',
       rotation: 0
-    }));
+    });
 
-    const existing = state.pages.findIndex(page => page.fileName === 'AUTHORIZATION.pdf');
-    state.pages.splice(existing >= 0 ? existing + 1 : state.pages.length, 0, ...entries);
     await renderPageBoard();
     toast('Authorization added to packet', 'success');
   }
@@ -268,19 +256,16 @@
 
   function setup() {
     saveTemplates();
-
     const button = document.getElementById('openAuthorizationFromMergeBtn');
     if (button && button.dataset.bound !== 'true') {
       button.dataset.bound = 'true';
       button.addEventListener('click', openModal);
     }
-
     document.getElementById('letterTemplateCloseBtn')?.addEventListener('click', closeModal);
     document.getElementById('letterTemplateCancelBtn')?.addEventListener('click', closeModal);
     document.getElementById('letterTemplateApplyBtn')?.addEventListener('click', async () => {
       const apply = document.getElementById('letterTemplateApplyBtn');
       if (apply) apply.disabled = true;
-
       try {
         await addAuthorizationToPacket();
         closeModal();
@@ -291,7 +276,6 @@
         if (apply) apply.disabled = false;
       }
     });
-
     document.getElementById('letterTemplateBureau')?.addEventListener('change', updateBureauAddress);
     document.getElementById('letterTemplateSelect')?.addEventListener('change', updateTemplateDeleteState);
     document.getElementById('deleteSavedTemplateBtn')?.addEventListener('click', deleteSelectedTemplate);
