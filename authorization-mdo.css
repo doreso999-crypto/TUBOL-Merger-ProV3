@@ -1,0 +1,31 @@
+/* M&O Authorization-only styles. */
+#openAuthorizationFromMergeBtn {
+  white-space: nowrap;
+}
+
+#letterTemplateModal {
+  z-index: 1000;
+}
+
+#letterTemplateModal .letter-template-card {
+  max-width: 720px;
+}
+
+#letterTemplateApplyBtn[disabled],
+#deleteSavedTemplateBtn[disabled] {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+#letterEditor {
+  position: fixed !important;
+  left: -100000px !important;
+  top: 0 !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+#letterView,
+[data-view="letterView"] {
+  display: none !important;
+}
