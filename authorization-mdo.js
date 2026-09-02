@@ -13,7 +13,7 @@
       '',
       'This is {{CLIENT_NAME}} and I authorize this dispute.',
       '',
-      'Today is {{DATE}}.',
+      'Today is{{DATE}}.',
       '',
       'I am submitting this correspondence through a mailing service for document handling and delivery purposes. This letter serves as my authorization for you to receive and process this dispute on my behalf.',
       '',
@@ -117,7 +117,7 @@
     const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
     return getSelectedTemplate().text.map(line => line
       .replaceAll('{{CLIENT_NAME}}', clientName)
-      .replaceAll('{{DATE}}', date)
+      .replaceAll('{{DATE}}', ` ${date}`)
       .replaceAll('{{BUREAU}}', address[0])
       .replaceAll('{{BUREAU_ADDRESS_LINE_1}}', address[1])
       .replaceAll('{{BUREAU_ADDRESS_LINE_2}}', address[2])
