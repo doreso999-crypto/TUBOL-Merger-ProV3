@@ -37,6 +37,7 @@
       "authorization-mdo.css",
       "pdf-render-fix.js",
       "workspace-ui-fixes.js",
+      "converter.js",
       "modal-consistency.css",
       "preview-theme.css",
       "full-content-workspace.css",
