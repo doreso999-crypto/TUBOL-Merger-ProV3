@@ -38,7 +38,9 @@
 
   function syncPdfMode() {
     const browse = document.getElementById('converterBrowseBtn');
+    const drop = document.getElementById('converterDrop');
     if (browse) browse.style.setProperty('display', 'none', 'important');
+    if (drop) drop.style.pointerEvents = 'none';
 
     const title = document.getElementById('converterDropTitle');
     const subtitle = document.getElementById('converterDropSubtitle');
@@ -51,6 +53,8 @@
 
   function syncJpgMode() {
     const browse = document.getElementById('converterBrowseBtn');
+    const drop = document.getElementById('converterDrop');
+    if (drop) drop.style.pointerEvents = '';
     if (browse) {
       browse.style.removeProperty('display');
       browse.textContent = 'Choose JPG files';
