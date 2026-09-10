@@ -1,4 +1,4 @@
-/* TUBOL PDF Workspace — integrate PDF/JPG conversion into the packet action row. */
+/* TUBOL PDF Workspace — integrate one Convert action into the packet action row. */
 (() => {
   'use strict';
 
@@ -12,9 +12,8 @@
     for (const entry of pages) {
       if (!entry?.pdfBytes?.buffer || seenBuffers.has(entry.pdfBytes.buffer)) continue;
       seenBuffers.add(entry.pdfBytes.buffer);
-      const filename = String(entry.fileName || 'document.pdf').toLowerCase().endsWith('.pdf')
-        ? String(entry.fileName || 'document.pdf')
-        : `${entry.fileName || 'document'}.pdf`;
+      const originalName = String(entry.fileName || 'document.pdf');
+      const filename = originalName.toLowerCase().endsWith('.pdf') ? originalName : `${originalName}.pdf`;
       files.push(new File([entry.pdfBytes], filename, { type: 'application/pdf' }));
     }
     return files;
@@ -34,96 +33,105 @@
     }
   }
 
+  function showPdfModeUi() {
+    const browse = document.getElementById('converterBrowseBtn');
+    const title = document.getElementById('converterDropTitle');
+    const subtitle = document.getElementById('converterDropSubtitle');
+    if (browse) browse.style.display = 'none';
+    if (title) title.textContent = 'Convert PDFs from the packet';
+    if (subtitle) subtitle.textContent = 'The PDFs already in your page board will be converted in their current packet order.';
+  }
+
+  function showJpgModeUi() {
+    const browse = document.getElementById('converterBrowseBtn');
+    const title = document.getElementById('converterDropTitle');
+    const subtitle = document.getElementById('converterDropSubtitle');
+    if (browse) browse.style.display = '';
+    if (title) title.textContent = 'Drop JPG files here';
+    if (subtitle) subtitle.textContent = 'Select images in the order you want them to appear in the PDF.';
+  }
+
   function activatePdfToJpg() {
-    const modal = document.getElementById('converterModal');
     const pdfTab = document.getElementById('converterPdfToJpgTab');
     const input = document.getElementById('converterFileInput');
-    if (!modal || !pdfTab || !input) return false;
+    if (!pdfTab || !input) return false;
 
     pdfTab.click();
+    showPdfModeUi();
+
     const files = getPageFilesFromPacket();
     if (!files.length) {
-      window.toast?.('Drop PDF files into the packet first.', 'error');
+      window.toast?.('Add PDF files to the packet first.', 'error');
       return false;
     }
 
-    setInputFiles(input, files);
-    return true;
+    return setInputFiles(input, files);
   }
 
   function activateJpgToPdf() {
-    const modal = document.getElementById('converterModal');
     const jpgTab = document.getElementById('converterJpgToPdfTab');
-    if (!modal || !jpgTab) return false;
+    if (!jpgTab) return false;
     jpgTab.click();
+    showJpgModeUi();
     return true;
   }
 
-  function openConverterForPdfToJpg() {
-    const oldConvertButton = document.getElementById('convertBtn');
-    oldConvertButton?.remove();
-
+  function openConverter() {
     const modal = document.getElementById('converterModal');
     if (!modal) return;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('modal-open');
 
-    requestAnimationFrame(() => activatePdfToJpg());
+    requestAnimationFrame(() => {
+      const pdfTab = document.getElementById('converterPdfToJpgTab');
+      pdfTab?.click();
+      showPdfModeUi();
+
+      const files = getPageFilesFromPacket();
+      if (files.length) {
+        const input = document.getElementById('converterFileInput');
+        setInputFiles(input, files);
+      }
+    });
   }
 
-  function openConverterForJpgToPdf() {
-    const oldConvertButton = document.getElementById('convertBtn');
-    oldConvertButton?.remove();
-
-    const modal = document.getElementById('converterModal');
-    if (!modal) return;
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('modal-open');
-
-    requestAnimationFrame(() => activateJpgToPdf());
-  }
-
-  function ensureActionButtons() {
+  function ensureActionButton() {
     const actions = document.querySelector('.header-actions');
-    if (!actions) return;
-
-    document.getElementById('convertBtn')?.remove();
-
     const compressButton = document.getElementById('compressPacketBtn');
-    const mergeButton = document.getElementById('mergeExportBtn');
-    if (!compressButton || !mergeButton) return;
+    if (!actions || !compressButton) return;
 
-    let pdfButton = document.getElementById('pdfToJpgBtn');
-    let jpgButton = document.getElementById('jpgToPdfBtn');
+    document.getElementById('pdfToJpgBtn')?.remove();
+    document.getElementById('jpgToPdfBtn')?.remove();
+    document.querySelector('.top-actions #convertBtn')?.remove();
 
-    if (!pdfButton) {
-      pdfButton = document.createElement('button');
-      pdfButton.id = 'pdfToJpgBtn';
-      pdfButton.type = 'button';
-      pdfButton.className = 'btn btn-secondary';
-      pdfButton.textContent = 'PDF → JPG';
-      pdfButton.title = 'Convert the PDFs currently in the packet to JPG images';
-      pdfButton.addEventListener('click', openConverterForPdfToJpg);
+    const button = document.getElementById('convertBtn') || document.createElement('button');
+    button.id = 'convertBtn';
+    button.type = 'button';
+    button.className = 'btn btn-secondary';
+    button.textContent = 'Convert';
+    button.title = 'Convert PDF ↔ JPG';
+
+    if (!button.dataset.converterBound) {
+      button.addEventListener('click', openConverter);
+      button.dataset.converterBound = 'true';
     }
 
-    if (!jpgButton) {
-      jpgButton = document.createElement('button');
-      jpgButton.id = 'jpgToPdfBtn';
-      jpgButton.type = 'button';
-      jpgButton.className = 'btn btn-secondary';
-      jpgButton.textContent = 'JPG → PDF';
-      jpgButton.title = 'Convert JPG images to a PDF';
-      jpgButton.addEventListener('click', openConverterForJpgToPdf);
-    }
+    actions.insertBefore(button, compressButton);
+  }
 
-    actions.insertBefore(pdfButton, compressButton);
-    actions.insertBefore(jpgButton, compressButton);
+  function injectNoBlurStyle() {
+    const id = 'converter-no-blur-style';
+    if (document.getElementById(id)) return;
+    const style = document.createElement('style');
+    style.id = id;
+    style.textContent = '.converter-modal { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }';
+    document.head.appendChild(style);
   }
 
   function init() {
-    ensureActionButtons();
+    injectNoBlurStyle();
+    ensureActionButton();
   }
 
   if (document.readyState === 'loading') {
