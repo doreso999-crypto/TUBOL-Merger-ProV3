@@ -38,6 +38,7 @@
       "pdf-render-fix.js",
       "workspace-ui-fixes.js",
       "converter.js",
+      "converter-ui-integration.js",
       "modal-consistency.css",
       "preview-theme.css",
       "full-content-workspace.css",
