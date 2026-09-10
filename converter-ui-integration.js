@@ -51,29 +51,15 @@
     if (subtitle) subtitle.textContent = 'Select images in the order you want them to appear in the PDF.';
   }
 
-  function activatePdfToJpg() {
+  function bindModeUi() {
     const pdfTab = document.getElementById('converterPdfToJpgTab');
-    const input = document.getElementById('converterFileInput');
-    if (!pdfTab || !input) return false;
-
-    pdfTab.click();
-    showPdfModeUi();
-
-    const files = getPageFilesFromPacket();
-    if (!files.length) {
-      window.toast?.('Add PDF files to the packet first.', 'error');
-      return false;
-    }
-
-    return setInputFiles(input, files);
-  }
-
-  function activateJpgToPdf() {
     const jpgTab = document.getElementById('converterJpgToPdfTab');
-    if (!jpgTab) return false;
-    jpgTab.click();
-    showJpgModeUi();
-    return true;
+    if (!pdfTab || !jpgTab) return;
+    if (pdfTab.dataset.integrationBound) return;
+
+    pdfTab.addEventListener('click', showPdfModeUi);
+    jpgTab.addEventListener('click', showJpgModeUi);
+    pdfTab.dataset.integrationBound = 'true';
   }
 
   function openConverter() {
@@ -84,6 +70,7 @@
     document.body.classList.add('modal-open');
 
     requestAnimationFrame(() => {
+      bindModeUi();
       const pdfTab = document.getElementById('converterPdfToJpgTab');
       pdfTab?.click();
       showPdfModeUi();
@@ -132,6 +119,7 @@
   function init() {
     injectNoBlurStyle();
     ensureActionButton();
+    bindModeUi();
   }
 
   if (document.readyState === 'loading') {
