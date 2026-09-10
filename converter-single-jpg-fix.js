@@ -1,10 +1,9 @@
-/* TUBOL PDF Workspace — direct JPG save for a single-page PDF conversion. */
+/* TUBOL PDF Workspace — direct JPG save for a single page remaining in the packet. */
 (() => {
   'use strict';
 
   async function saveJpgBlob(blob, suggestedName) {
     const safeName = String(suggestedName || 'converted.jpg').replace(/[\\/:*?"<>|]+/g, '-');
-
     if (window.showSaveFilePicker) {
       try {
         const handle = await window.showSaveFilePicker({
@@ -20,7 +19,6 @@
         console.warn('Direct JPG save picker failed; using download fallback.', error);
       }
     }
-
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -36,34 +34,45 @@
     return String(name || 'document.pdf').replace(/\.pdf$/i, '');
   }
 
-  async function convertSinglePagePdfToJpg(file) {
+  async function renderPdfPageToJpg(bytes, sourceIndex, dpi, quality) {
+    const pdf = typeof window.getPdfJsDocument === 'function'
+      ? await window.getPdfJsDocument(new Uint8Array(bytes))
+      : await pdfjsLib.getDocument({ data: new Uint8Array(bytes) }).promise;
+    const page = await pdf.getPage(Number(sourceIndex) || 1);
+    const scale = dpi / 72;
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) throw new Error('Could not create an image canvas.');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    await page.render({ canvasContext: context, viewport }).promise;
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob(result => result ? resolve(result) : reject(new Error('Could not create JPG output.')), 'image/jpeg', quality);
+    });
+  }
+
+  async function convertRemainingPacketPageToJpg(entry) {
+    const dpi = Number(document.getElementById('converterDpi')?.value || 200);
+    const quality = Number(document.getElementById('converterQuality')?.value || 0.90);
+    const bytes = entry.pdfBytes instanceof Uint8Array ? entry.pdfBytes : new Uint8Array(entry.pdfBytes);
+    const sourceIndex = Number(entry.sourceIndex) || 1;
+    const blob = await renderPdfPageToJpg(bytes, sourceIndex, dpi, quality);
+    await saveJpgBlob(blob, `${getBaseName(entry.fileName || 'document.pdf')}.jpg`);
+    return true;
+  }
+
+  async function convertSinglePagePdfFileToJpg(file) {
     const dpi = Number(document.getElementById('converterDpi')?.value || 200);
     const quality = Number(document.getElementById('converterQuality')?.value || 0.90);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const pdf = typeof window.getPdfJsDocument === 'function'
       ? await window.getPdfJsDocument(bytes)
       : await pdfjsLib.getDocument({ data: bytes }).promise;
-
     if (pdf.numPages !== 1) return false;
-
-    const page = await pdf.getPage(1);
-    const scale = dpi / 72;
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(viewport.width);
-    canvas.height = Math.ceil(viewport.height);
-
-    const context = canvas.getContext('2d', { alpha: false });
-    if (!context) throw new Error('Could not create an image canvas.');
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    await page.render({ canvasContext: context, viewport }).promise;
-
-    const blob = await new Promise((resolve, reject) => {
-      canvas.toBlob(result => result ? resolve(result) : reject(new Error('Could not create JPG output.')), 'image/jpeg', quality);
-    });
-
+    const blob = await renderPdfPageToJpg(bytes, 1, dpi, quality);
     await saveJpgBlob(blob, `${getBaseName(file.name)}.jpg`);
     return true;
   }
@@ -72,29 +81,30 @@
     const button = document.getElementById('converterRunBtn');
     if (!button || button.dataset.singleJpgFixBound) return;
     button.dataset.singleJpgFixBound = 'true';
-
     button.addEventListener('click', async event => {
       const pdfTab = document.getElementById('converterPdfToJpgTab');
       if (!pdfTab?.classList.contains('active')) return;
-
+      const packetPages = Array.isArray(window.state?.pages) ? window.state.pages : [];
       const input = document.getElementById('converterFileInput');
       const files = Array.from(input?.files || []);
-      if (files.length !== 1) return;
-
-      event.stopImmediatePropagation();
+      const isSingleRemainingPacketPage = packetPages.length === 1 && packetPages[0]?.pdfBytes;
+      const isSinglePdfFile = files.length === 1;
+      if (!isSingleRemainingPacketPage && !isSinglePdfFile) return;
       event.preventDefault();
-
+      event.stopImmediatePropagation();
       const originalText = button.textContent;
       button.disabled = true;
       button.textContent = 'Converting…';
-
       try {
-        const handled = await convertSinglePagePdfToJpg(files[0]);
-        if (!handled) return;
-        document.getElementById('converterStatus')?.replaceChildren(document.createTextNode('JPG saved successfully.'));
+        const handled = isSingleRemainingPacketPage
+          ? await convertRemainingPacketPageToJpg(packetPages[0])
+          : await convertSinglePagePdfFileToJpg(files[0]);
+        if (handled) {
+          document.getElementById('converterStatus')?.replaceChildren(document.createTextNode('JPG saved successfully.'));
+        }
       } catch (error) {
         console.error('Single-page PDF → JPG conversion failed.', error);
-        if (typeof window.toast === 'function') window.toast('Could not convert this PDF to JPG.', 'error');
+        if (typeof window.toast === 'function') window.toast('Could not convert this PDF page to JPG.', 'error');
       } finally {
         button.disabled = false;
         button.textContent = originalText;
