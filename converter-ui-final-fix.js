@@ -92,11 +92,6 @@
   function enforce() {
     syncLegacyControls();
     bindTabs();
-    const modal = document.getElementById('converterModal');
-    if (modal?.classList.contains('open')) {
-      const pdfTab = document.getElementById('converterPdfToJpgTab');
-      if (pdfTab?.classList.contains('active')) syncPdfMode();
-    }
   }
 
   function init() {
