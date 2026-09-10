@@ -39,6 +39,7 @@
       "workspace-ui-fixes.js",
       "converter.js",
       "converter-ui-integration.js",
+      "converter-ui-final-fix.js",
       "modal-consistency.css",
       "preview-theme.css",
       "full-content-workspace.css",
