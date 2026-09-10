@@ -11,4 +11,5 @@ document.write(`
   <script src="workspace-ui-fixes.js"><\/script>
   <script src="authorization-mdo.js"><\/script>
   <script src="settings.js"><\/script>
+  <script src="converter.js"><\/script>
 `);
