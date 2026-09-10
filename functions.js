@@ -13,4 +13,5 @@ document.write(`
   <script src="settings.js"><\/script>
   <script src="converter.js"><\/script>
   <script src="converter-ui-integration.js"><\/script>
+  <script src="converter-ui-final-fix.js"><\/script>
 `);
