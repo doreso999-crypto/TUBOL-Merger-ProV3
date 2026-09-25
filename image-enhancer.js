@@ -18,7 +18,7 @@
     const el = document.querySelector('#toast');
     if (!el) return;
     el.textContent = message;
-    el.className = \`toast \${type || 'info'} show\`;
+    el.className = `toast ${type || 'info'} show`;
     clearTimeout(el._timer);
     el._timer = setTimeout(() => el.classList.remove('show'), 2800);
   }
@@ -33,7 +33,7 @@
     if (document.getElementById(STYLE_ID)) return;
     const style = document.createElement('style');
     style.id = STYLE_ID;
-    style.textContent = \`
+    style.textContent = `
       #ultraClearBtn { white-space: nowrap; }
       .ultra-clear-modal { position: fixed; inset: 0; z-index: 105; display: none; align-items: center; justify-content: center; padding: 22px; background: rgba(15, 23, 42, .52); }
       .ultra-clear-modal.open { display: flex; }
@@ -68,7 +68,7 @@
         .ultra-clear-actions { width: 100%; }
         .ultra-clear-actions .btn { flex: 1; }
       }
-    \`;
+    `;
     document.head.appendChild(style);
   }
 
@@ -80,7 +80,7 @@
     modal.id = 'ultraClearModal';
     modal.className = 'ultra-clear-modal';
     modal.setAttribute('aria-hidden', 'true');
-    modal.innerHTML = \`
+    modal.innerHTML = `
       <div class="ultra-clear-card" role="dialog" aria-modal="true" aria-labelledby="ultraClearTitle">
         <div class="ultra-clear-head">
           <div>
@@ -141,7 +141,7 @@
           </div>
         </div>
       </div>
-    \`;
+    `;
     document.body.appendChild(modal);
 
     const format = document.getElementById('ultraClearFormat');
@@ -208,9 +208,9 @@
       return;
     }
 
-    const existingKeys = new Set(state.files.map(file => \`\${file.name}:\${file.size}:\${file.lastModified}\`));
+    const existingKeys = new Set(state.files.map(file => `${file.name}:${file.size}:${file.lastModified}`));
     incoming.forEach(file => {
-      const key = \`\${file.name}:\${file.size}:\${file.lastModified}\`;
+      const key = `${file.name}:${file.size}:${file.lastModified}`;
       if (!existingKeys.has(key)) {
         state.files.push(file);
         existingKeys.add(key);
@@ -237,19 +237,19 @@
     const run = document.getElementById('ultraClearRunBtn');
     if (!list || !status || !run) return;
 
-    list.innerHTML = state.files.map((file, index) => \`
+    list.innerHTML = state.files.map((file, index) => `
       <div class="ultra-clear-file">
-        <div class="ultra-clear-file-index">\${index + 1}</div>
-        <div class="ultra-clear-file-name" title="\${esc(file.name)}">\${esc(file.name)}</div>
-        <button class="ultra-clear-file-remove" type="button" data-index="\${index}" title="Remove">✕</button>
-      </div>\`).join('');
+        <div class="ultra-clear-file-index">${index + 1}</div>
+        <div class="ultra-clear-file-name" title="${esc(file.name)}">${esc(file.name)}</div>
+        <button class="ultra-clear-file-remove" type="button" data-index="${index}" title="Remove">✕</button>
+      </div>`).join('');
 
     list.querySelectorAll('.ultra-clear-file-remove').forEach(button => {
       button.addEventListener('click', () => removeFile(Number(button.dataset.index)));
     });
 
     status.textContent = state.files.length
-      ? \`\${state.files.length} image\${state.files.length === 1 ? '' : 's'} selected.\`
+      ? `${state.files.length} image${state.files.length === 1 ? '' : 's'} selected.`
       : 'No images selected.';
 
     run.disabled = state.busy || !state.files.length;
@@ -317,7 +317,7 @@
     ctx.imageSmoothingQuality = 'high';
 
     const clarity = getClarityConfig(clarityName);
-    ctx.filter = \`contrast(\${clarity.contrast}) saturate(\${clarity.saturation}) brightness(\${clarity.brightness})\`;
+    ctx.filter = `contrast(${clarity.contrast}) saturate(${clarity.saturation}) brightness(${clarity.brightness})`;
     ctx.drawImage(bitmap, 0, 0, size.width, size.height);
     ctx.filter = 'none';
 
@@ -444,7 +444,7 @@
     const bar = progress?.querySelector('span');
     const status = document.getElementById('ultraClearStatus');
     if (progress) progress.style.display = 'block';
-    if (bar) bar.style.width = \`\${Math.max(0, Math.min(100, percent))}%\`;
+    if (bar) bar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
     if (status && label) status.textContent = label;
   }
 
@@ -469,19 +469,19 @@
 
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
-        setProgress((index / files.length) * 100, \`Enhancing \${index + 1} of \${files.length}…\`);
+        setProgress((index / files.length) * 100, `Enhancing ${index + 1} of ${files.length}…`);
 
         const bitmap = await loadBitmap(file);
         const canvas = enhanceBitmap(bitmap, scale, clarity);
         const blob = await canvasToBlob(canvas, format, quality);
         const extension = format === 'jpg' ? 'jpg' : 'png';
-        const filename = safeFileName(\`\${baseName(file.name)} - Ultra Clear.\${extension}\`);
+        const filename = safeFileName(`${baseName(file.name)} - Ultra Clear.${extension}`);
         outputs.push({ blob, filename });
         canvas.width = 1;
         canvas.height = 1;
       }
 
-      setProgress(96, outputs.length === 1 ? 'Ready to save the enhanced image…' : \`Ready to save \${outputs.length} enhanced images…\`);
+      setProgress(96, outputs.length === 1 ? 'Ready to save the enhanced image…' : `Ready to save ${outputs.length} enhanced images…`);
       const result = await saveMany(outputs);
 
       if (result === 'cancelled') {
@@ -490,13 +490,13 @@
       } else {
         setProgress(100, outputs.length === 1
           ? 'Ultra Clear image saved successfully.'
-          : \`\${outputs.length} Ultra Clear images saved successfully.\`);
-        toast(outputs.length === 1 ? 'Ultra Clear image saved.' : \`\${outputs.length} Ultra Clear images saved.\`, 'success');
+          : `${outputs.length} Ultra Clear images saved successfully.`);
+        toast(outputs.length === 1 ? 'Ultra Clear image saved.' : `${outputs.length} Ultra Clear images saved.`, 'success');
       }
     } catch (error) {
       console.error('Ultra Clear image enhancement failed.', error);
       setProgress(0, 'Enhancement failed.');
-      toast(\`Could not enhance the selected image\${error?.message ? \`: \${error.message}\` : '.'}\`, 'error');
+      toast(`Could not enhance the selected image${error?.message ? `: ${error.message}` : '.'}`, 'error');
     } finally {
       setBusy(false);
       setTimeout(() => {
