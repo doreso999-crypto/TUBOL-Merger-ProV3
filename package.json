@@ -1,6 +1,6 @@
 {
   "name": "tubol-merger-pro",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "TUBOL Merger Pro - local PDF packet workspace",
   "main": "main.js",
   "author": "TUBOL Merger Pro",
@@ -43,6 +43,7 @@
       "converter-single-jpg-fix.js",
       "image-enhancer.js",
       "image-enhancer-v2.js",
+      "ai-super-resolution.js",
       "modal-consistency.css",
       "preview-theme.css",
       "full-content-workspace.css",
