@@ -41,6 +41,7 @@
       "converter-ui-integration.js",
       "converter-ui-final-fix.js",
       "converter-single-jpg-fix.js",
+      "image-enhancer.js",
       "modal-consistency.css",
       "preview-theme.css",
       "full-content-workspace.css",
