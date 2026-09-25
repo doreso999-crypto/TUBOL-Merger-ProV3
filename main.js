@@ -9,7 +9,7 @@ function createWindow() {
     minWidth: 760,
     minHeight: 620,
     backgroundColor: '#0f172a',
-    title: 'TUBOL Merger Pro',
+    title: 'PDF Workspace v1.0.1',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
