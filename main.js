@@ -9,7 +9,7 @@ function createWindow() {
     minWidth: 760,
     minHeight: 620,
     backgroundColor: '#0f172a',
-    title: 'PDF Workspace v1.0.1',
+    title: 'PDF Workspace v1.0.2',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
