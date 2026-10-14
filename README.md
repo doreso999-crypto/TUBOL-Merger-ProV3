@@ -24,3 +24,12 @@ Then open `http://localhost:8080`.
 ## Important note
 
 The current implementation uses `pdf-lib` and `html2pdf.js` from public CDNs. The app itself does not upload user PDFs to a server, but the browser needs internet access to load those libraries on first page load. For a fully offline build, vendor those library files locally.
+
+### WebP image conversion
+
+Click **WebP → JPG / PNG** beside **Convert**, choose one or more WebP files,
+select JPG or PNG, and click **Convert images**. Click each resulting download
+link to save the image. Conversion happens locally at the original dimensions.
+PNG preserves transparency; JPG uses a white background and 95% quality.
+Animated WebP files export their first frame. Invalid files show an individual
+error without stopping the other conversions.
