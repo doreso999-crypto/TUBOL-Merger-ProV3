@@ -26,9 +26,9 @@
             <div><p class="eyebrow">DOCUMENT ASSEMBLY</p><h1>PDF Packet</h1><p class="subtext">Add PDFs, arrange pages, insert your authorization, then export one polished packet.</p></div>
             <div class="header-actions">
               <button class="btn btn-secondary" id="addPdfBtn" type="button">＋ Add PDFs</button>
-              <button class="btn btn-secondary" id="ultraClearBtn" type="button" title="Enhance JPG and PNG images for clearer output">✦ Ultra Clear</button>
               <button class="btn btn-secondary" id="openAuthorizationFromMergeBtn" type="button" title="Add Authorization to Packet">＋ Authorization</button>
               <button class="btn btn-secondary" id="convertBtn" type="button" title="Convert PDF and JPG files">Convert</button>
+              <button class="btn btn-secondary" id="webpConvertBtn" type="button">WebP → JPG / PNG</button>
               <button class="btn btn-secondary" id="compressPacketBtn" type="button">Compress Packet</button>
               <button class="btn btn-primary" id="mergeExportBtn" type="button">Merge &amp; Download</button>
               <input id="pdfInput" type="file" accept="application/pdf" multiple hidden />
@@ -53,10 +53,8 @@
   <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="functions.js"></script>
-  <script src="image-enhancer.js"></script>
-  <script src="image-enhancer-v2.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/ort.webgpu.min.js"></script>
-  <script src="ai-super-resolution.js"></script>
+  <link rel="stylesheet" href="webp-converter.css">
+  <script src="webp-converter.js"></script>
   <script src="authorization-mdo.js"></script>
   <script src="pdf-drop-scope.js"></script>
 </body>
