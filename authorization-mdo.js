@@ -73,7 +73,25 @@
 
   const ADDRESS_STORAGE_KEY = 'tubolBureauAddresses';
 
+  const ONLINE_BUREAU_NAMES = {
+    experian: 'Experian',
+    equifax: 'Equifax',
+    transunion: 'TransUnion'
+  };
+  const CFPB_COMPANY_NAMES = {
+    experian: 'Experian Information Solutions, Inc.',
+    equifax: 'Equifax Information Services LLC',
+    transunion: 'TransUnion LLC'
+  };
+
+  function getSubmissionMethod() {
+    return document.getElementById('letterTemplateSubmissionMethod')?.value || 'mail';
+  }
+
   function getBureauAddress(bureau) {
+    const method = getSubmissionMethod();
+    if (method === 'website') return [ONLINE_BUREAU_NAMES[bureau] || ONLINE_BUREAU_NAMES.experian, '', ''];
+    if (method === 'cfpb') return [CFPB_COMPANY_NAMES[bureau] || CFPB_COMPANY_NAMES.experian, '', ''];
     const defaults = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
     try {
       const saved = JSON.parse(localStorage.getItem(ADDRESS_STORAGE_KEY) || '{}');
@@ -114,9 +132,14 @@
       document.getElementById('letterTemplateBureauLine1'),
       document.getElementById('letterTemplateBureauLine2')
     ];
-    fields.forEach((field, index) => { if (field) field.value = address[index]; });
+    const isMail = getSubmissionMethod() === 'mail';
+    fields.forEach((field, index) => {
+      if (!field) return;
+      field.value = address[index];
+      field.disabled = !isMail;
+    });
     const target = document.getElementById('letterTemplateBureauAddress');
-    if (target) target.innerHTML = address.map(escapeHtml).join('<br>');
+    if (target) target.innerHTML = address.filter(Boolean).map(escapeHtml).join('<br>');
   }
 
   function handleBureauAddressEdit() {
@@ -128,7 +151,7 @@
     ];
     saveBureauAddress(bureau, address);
     const target = document.getElementById('letterTemplateBureauAddress');
-    if (target) target.innerHTML = address.map(escapeHtml).join('<br>');
+    if (target) target.innerHTML = address.filter(Boolean).map(escapeHtml).join('<br>');
   }
 
   function openModal() {
@@ -230,11 +253,10 @@
     const lineHeight = 19;
     let y = 720;
 
-    page.drawText(address[0], { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
-    y -= lineHeight;
-    page.drawText(address[1], { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
-    y -= lineHeight;
-    page.drawText(address[2], { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+    for (const line of address.filter(Boolean)) {
+      page.drawText(line, { x: left, y, size, font: regularFont, color: PDFLib.rgb(0, 0, 0) });
+      y -= lineHeight;
+    }
     y -= 38;
 
     drawMixedLine(page, [
@@ -329,6 +351,7 @@
       }
     });
     document.getElementById('letterTemplateBureau')?.addEventListener('change', updateBureauAddress);
+    document.getElementById('letterTemplateSubmissionMethod')?.addEventListener('change', updateBureauAddress);
     ['letterTemplateBureauName', 'letterTemplateBureauLine1', 'letterTemplateBureauLine2'].forEach(id => {
       document.getElementById(id)?.addEventListener('input', handleBureauAddressEdit);
     });
