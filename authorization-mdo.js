@@ -79,7 +79,14 @@
       const saved = JSON.parse(localStorage.getItem(ADDRESS_STORAGE_KEY) || '{}');
       const custom = saved[bureau];
       if (Array.isArray(custom) && custom.length === 3) {
-        return custom.map((value, index) => String(value ?? defaults[index]));
+        const address = custom.map((value, index) => String(value ?? defaults[index]));
+        // Migrate the previous default recipient name for existing browsers.
+        if (bureau === 'transunion' && address[0] === 'TransUnion Consumer Relations') {
+          address[0] = 'TransUnion Consumer Solutions';
+          saved[bureau] = address;
+          localStorage.setItem(ADDRESS_STORAGE_KEY, JSON.stringify(saved));
+        }
+        return address;
       }
     } catch (error) {
       console.warn('Could not read saved bureau addresses.', error);
