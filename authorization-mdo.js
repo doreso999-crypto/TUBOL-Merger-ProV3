@@ -28,7 +28,7 @@
   const BUREAU_ADDRESSES = {
     experian: ['Experian', 'P.O. Box 4500', 'Allen, TX 75013'],
     equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
-    transunion: ['TransUnion Consumer Relations', 'P.O. Box 2000', 'Chester, PA 19016-2000']
+    transunion: ['TransUnion Consumer Solutions', 'P.O. Box 2000', 'Chester, PA 19016-2000']
   };
 
   function getEasternToday() {
