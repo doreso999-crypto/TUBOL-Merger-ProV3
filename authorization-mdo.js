@@ -28,7 +28,7 @@
   const BUREAU_ADDRESSES = {
     experian: ['Experian', 'P.O. Box 4500', 'Allen, TX 75013'],
     equifax: ['Equifax Information Services LLC', 'P.O. Box 740256', 'Atlanta, GA 30374-0256'],
-    transunion: ['TransUnion Consumer Solutions', 'P.O. Box 2000', 'Chester, PA 19016-2000']
+    transunion: ['TransUnion LLC Consumer Dispute Center', 'P.O. Box 2000', 'Chester, PA 19016']
   };
 
   function getEasternToday() {
@@ -81,8 +81,9 @@
       if (Array.isArray(custom) && custom.length === 3) {
         const address = custom.map((value, index) => String(value ?? defaults[index]));
         // Migrate the previous default recipient name for existing browsers.
-        if (bureau === 'transunion' && address[0] === 'TransUnion Consumer Relations') {
-          address[0] = 'TransUnion Consumer Solutions';
+        if (bureau === 'transunion' && ['TransUnion Consumer Relations', 'TransUnion Consumer Solutions'].includes(address[0])) {
+          address[0] = 'TransUnion LLC Consumer Dispute Center';
+          address[2] = 'Chester, PA 19016';
           saved[bureau] = address;
           localStorage.setItem(ADDRESS_STORAGE_KEY, JSON.stringify(saved));
         }
