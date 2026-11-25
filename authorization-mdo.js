@@ -71,12 +71,56 @@
     if (deleteButton) deleteButton.disabled = true;
   }
 
+  const ADDRESS_STORAGE_KEY = 'tubolBureauAddresses';
+
+  function getBureauAddress(bureau) {
+    const defaults = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
+    try {
+      const saved = JSON.parse(localStorage.getItem(ADDRESS_STORAGE_KEY) || '{}');
+      const custom = saved[bureau];
+      if (Array.isArray(custom) && custom.length === 3) {
+        return custom.map((value, index) => String(value ?? defaults[index]));
+      }
+    } catch (error) {
+      console.warn('Could not read saved bureau addresses.', error);
+    }
+    return [...defaults];
+  }
+
+  function saveBureauAddress(bureau, address) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ADDRESS_STORAGE_KEY) || '{}');
+      saved[bureau] = address.map(value => String(value ?? '').trim());
+      localStorage.setItem(ADDRESS_STORAGE_KEY, JSON.stringify(saved));
+    } catch (error) {
+      console.warn('Could not save bureau address.', error);
+      toast('Could not save bureau address in this browser', 'error');
+    }
+  }
+
   function updateBureauAddress() {
-    const target = document.getElementById('letterTemplateBureauAddress');
-    if (!target) return;
     const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
-    const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
-    target.innerHTML = `${escapeHtml(address[0])}<br>${escapeHtml(address[1])}<br>${escapeHtml(address[2])}`;
+    const address = getBureauAddress(bureau);
+    const fields = [
+      document.getElementById('letterTemplateBureauName'),
+      document.getElementById('letterTemplateBureauLine1'),
+      document.getElementById('letterTemplateBureauLine2')
+    ];
+    fields.forEach((field, index) => { if (field) field.value = address[index]; });
+    const target = document.getElementById('letterTemplateBureauAddress');
+    if (target) target.innerHTML = address.map(escapeHtml).join('<br>');
+  }
+
+  function handleBureauAddressEdit() {
+    const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
+    const address = [
+      document.getElementById('letterTemplateBureauName')?.value || '',
+      document.getElementById('letterTemplateBureauLine1')?.value || '',
+      document.getElementById('letterTemplateBureauLine2')?.value || ''
+    ];
+    saveBureauAddress(bureau, address);
+    const target = document.getElementById('letterTemplateBureauAddress');
+    if (target) target.innerHTML = address.map(escapeHtml).join('<br>');
   }
 
   function openModal() {
@@ -114,7 +158,7 @@
     const clientName = document.getElementById('letterTemplateClientName')?.value?.trim() || '';
     const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || '');
     const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
-    const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
+    const address = getBureauAddress(bureau);
     return getSelectedTemplate().text.map(line => line
       .replaceAll('{{CLIENT_NAME}}', clientName)
       .replaceAll('{{DATE}}', ` ${date}`)
@@ -170,7 +214,7 @@
     const clientName = document.getElementById('letterTemplateClientName')?.value?.trim() || '';
     const date = formatAuthDate(document.getElementById('letterTemplateDate')?.value || '');
     const bureau = document.getElementById('letterTemplateBureau')?.value || 'experian';
-    const address = BUREAU_ADDRESSES[bureau] || BUREAU_ADDRESSES.experian;
+    const address = getBureauAddress(bureau);
 
     const left = 72;
     const maxWidth = 468;
@@ -277,6 +321,9 @@
       }
     });
     document.getElementById('letterTemplateBureau')?.addEventListener('change', updateBureauAddress);
+    ['letterTemplateBureauName', 'letterTemplateBureauLine1', 'letterTemplateBureauLine2'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', handleBureauAddressEdit);
+    });
     document.getElementById('letterTemplateSelect')?.addEventListener('change', updateTemplateDeleteState);
     document.getElementById('deleteSavedTemplateBtn')?.addEventListener('click', deleteSelectedTemplate);
     document.getElementById('letterTemplateModal')?.addEventListener('click', event => {
@@ -288,6 +335,7 @@
     AUTH_TEMPLATE,
     DEFAULT_AUTH_TEMPLATE: AUTH_TEMPLATE,
     AUTH_BUREAUS: BUREAU_ADDRESSES,
+    getAuthorizationBureauAddress: getBureauAddress,
     getAuthTemplates: getTemplates,
     saveAuthTemplates: saveTemplates,
     getEasternToday,
